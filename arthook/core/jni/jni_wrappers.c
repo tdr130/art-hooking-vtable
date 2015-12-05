@@ -62,6 +62,9 @@ jobject getSystemClassLoader(JNIEnv* env)
 
 jclass loadClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetName)
 {
+    jclass test = NULL;
+    test = (jclass) check_cache(targetName);
+    if(test != 0) return test;
     arthooklog(" %s, targetname = %s \n ",__PRETTY_FUNCTION__, targetName);
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID loadClass = (*env)->GetMethodID(env, classLoader_cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
@@ -70,17 +73,39 @@ jclass loadClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetNa
     jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass loaded = (*env)->CallObjectMethod(env, classLoader, loadClass, name);
     arthooklog("loaded class = %p \n" , loaded);
-    return (jclass) (*env)->NewGlobalRef(env, loaded);
+    jclass globalref = (jclass) (*env)->NewGlobalRef(env, loaded);
+    create_cache(targetName, globalref);
+    return (jclass) globalref;
 }
-
+//problemi con le ref, ne fa troppe!!!!
+/*
+ *
+I/DEBUG   (  311): backtrace:
+I/DEBUG   (  311):     #00 pc 00010548  /system/lib/libc.so (syscall+28)
+I/DEBUG   (  311):     #01 pc 000a8999  /system/lib/libart.so (art::ReaderWriterMutex::ExclusiveLock(art::Thread*)+328)
+I/DEBUG   (  311):     #02 pc 001ba5a5  /system/lib/libart.so (art::JNI::NewGlobalRef(_JNIEnv*, _jobject*)+296)
+I/DEBUG   (  311):     #03 pc 0000773d  /data/local/tmp/libarthookdemo.so (findClassFromClassLoader+172)
+I/DEBUG   (  311):     #04 pc 00007867  /data/local/tmp/libarthookdemo.so (printStackTraceFromJava+14)
+I/DEBUG   (  311):     #05 pc 00006fe1  /data/local/tmp/libarthookdemo.so (my_invoke_method+144)
+I/DEBUG   (  311):     #06 pc 0020c8f9  /system/lib/libart.so (art::Constructor_newInstance(_JNIEnv*, _jobject*, _jobjectArray*, unsigned char)+196)
+I/DEBUG   (  311):     #07 pc 0001b3a7  /data/dalvik-cache/arm/system@framework@boot.oat
+ */
 jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetName)
 {
+    jclass test = NULL;
+    test = (jclass) check_cache(targetName);
+    if(test != 0) {
+        arthooklog("%s return from cache: 0x%08x\n", __PRETTY_FUNCTION__, test);
+        return test;
+    }
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID findClass = (*env)->GetMethodID(env, classLoader_cls, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
     arthooklog("findClass mid = %p \n", findClass);
     jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass res = (*env)->CallObjectMethod(env,classLoader,findClass,name);
     arthooklog("HookClass =  %p\n" , res);
-    return (jclass) (*env)->NewGlobalRef(env, res) ; 
+    jclass globalref = (jclass) (*env)->NewGlobalRef(env, res);
+    create_cache(targetName, globalref);
+    return (jclass) globalref;
 }
 

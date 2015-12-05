@@ -44,18 +44,18 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     arthooklog("!!! %s receiver : 0x%08x, javamethod : 0x%08x \n", __PRETTY_FUNCTION__,
                (unsigned int) javaReceiver,  (unsigned int) javaMethod);
 
-    void* checkcalledmethod = (void*) 1;
+    void* checkcalledmethod = (void*) 0;
     void* res = NULL;
     jint checkstack = 0;
     JNIEnv* th_env = get_jnienv();
     arthooklog("env  =  %p \n", th_env);
+
     if(done==0) {init_hook(); done=1;}
 
     checkstack = printStackTraceFromJava(th_env);
 
     // check if an hooked method is the target of the reflection call
     checkcalledmethod = hh_check_javareflection_call(th_env, javaMethod, javaReceiver);
-
     // checks:
     // 1. the method called with reflection is hooked?
     // 2. the call is from our patch method?

@@ -195,7 +195,9 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
         num += 1;
 
     jvalue* args = calloc(num, sizeof(jvalue));
+    arthooklog("pd signature: %s\n", hook->msig);
     char* res = parseSignature(hook->msig);
+    arthooklog("after parse signature: %s\n", res);
     char* tok = strtok(res, "|");
     jstring s;
     jobject o;
@@ -204,6 +206,8 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
     jfloat f;
     jboolean z;
     jlong j;
+    jbyteArray jba;
+
     if(call_patchmeth) {
         args[0].l = thiz;
         counter++;
@@ -218,6 +222,7 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
             index++;
         }
         else if(*tok == 'I'){
+            arthooklog("parser sto chiamanto getint su %c\n", *tok);
             i = callGetInt(env, joa, (jint) index);
             arthooklog("int: %d\n", i);
             args[counter].i = i;
@@ -244,6 +249,16 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
             args[counter].z = z;
             counter++;
             index++;
+        }
+        else if(*tok == '['){
+            arthooklog("parser sto chiamando NULL su %c\n", *tok);
+            //if(*tok == 'B') {
+                arthooklog("parser sto chiamanto getbytearray su %c\n", *tok);
+                jba = callGetByteArray(env, joa, (jint) index);
+                args[counter].l = jba;
+                counter++;
+                index++;
+            //}
         }
         tok = strtok(NULL, "|");
     }
@@ -294,7 +309,8 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
         else
             res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
         if(res != NULL)
-           return (*env)->NewGlobalRef(env, res);
+            return res;
+           //return (*env)->NewGlobalRef(env, res);
         else return NULL;
     }
 }
@@ -313,12 +329,14 @@ jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaA
     }
     else{
         res = (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);
-        return (*env)->NewGlobalRef(env, res);
+        return res;
+        //return (*env)->NewGlobalRef(env, res);
     }
     if(args){
         jclass t = (*env)->GetObjectClass(env, thiz);
         res = (*env)->CallStaticObjectMethodA(env, h->hook_cls, h->hook_meth_ID, args);
-        return (*env)->NewGlobalRef(env, res);
+        return res;
+        //return (*env)->NewGlobalRef(env, res);
     }
     else{
         return NULL;

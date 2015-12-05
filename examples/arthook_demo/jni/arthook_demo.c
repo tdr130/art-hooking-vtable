@@ -15,12 +15,27 @@ static WrapMethodsToHook methodsToHook[] = {
 
     {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
         MYHOOKCLASS, "getDeviceId", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
-    /*
+    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;Landroid/os/Bundle;)V",
+            MYHOOKCLASS, "startActivity", "(Ljava/lang/Object;Landroid/content/Intent;Landroid/os/Bundle;)V", NULL },
+    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;)V",
+            MYHOOKCLASS, "startActivity", "(Ljava/lang/Object;Landroid/content/Intent;)V", NULL },
+    {"java/io/FileOutputStream", "write", "([BII)V",
+            MYHOOKCLASS, "write", "(Ljava/lang/Object;[BII)V", NULL
+    },
+
     {"android/app/ContextImpl","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
             MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
 
     {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
         MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
+
+    //<java.io.FileOutputStream: void write(byte[],int,int)> (FILE)
+
+
+    {"android/content/ContextWrapper", "sendBroadcast", "(Landroid/content/Intent;)V",
+            MYHOOKCLASS, "sendBroadcast", "(Ljava/lang/Object;Landroid/content/Intent;)V", NULL },
+    {"android/content/ContextWrapper", "sendBroadcast", "(Landroid/content/Intent;Ljava/lang/String;)V",
+            MYHOOKCLASS, "sendBroadcast", "(Ljava/lang/Object;Landroid/content/Intent;Ljava/lang/String;)V", NULL },
 
     {"android/hardware/Camera","takePicture",
      "(Landroid/hardware/Camera$ShutterCallback;Landroid/hardware/Camera$PictureCallback;Landroid/hardware/Camera$PictureCallback;)V",
@@ -32,7 +47,7 @@ static WrapMethodsToHook methodsToHook[] = {
             MYHOOKCLASS, "sendTextMessage",
             "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V",
             NULL},
-*/
+
 };
 
 
@@ -56,9 +71,9 @@ int my_hookdemo_init(JNIEnv* env)
     int nelem = NELEM(methodsToHook);
     for(i=0; i < nelem ; i++){
         test = findClassFromClassLoader(env,dexloader, methodsToHook[i].hookclsname);
-        jclass gtest = (*env)->NewGlobalRef(env, test);
-        jmethodID testID = (*env)->GetStaticMethodID(env,gtest,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
-        arthook_t* tmp = create_hook(env,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, gtest,testID);
+        //jclass gtest = (*env)->NewGlobalRef(env, test);
+        jmethodID testID = (*env)->GetStaticMethodID(env,test,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
+        arthook_t* tmp = create_hook(env,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, test,testID);
         add_hook(tmp);
     }    
     print_hashtable();
@@ -123,7 +138,11 @@ void my_init(void)
     // hook native functions
     //hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     //init_hook();
-    hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b", NULL, my_invoke_method);
-    arthooklog("%s  ended\n", __PRETTY_FUNCTION__);
+
+    hook(&invokeh, getpid(), "libart.",
+         "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
+         NULL, my_invoke_method);
+
+    arthooklog("%s  ended\n\n", __PRETTY_FUNCTION__);
 }
 

@@ -20,6 +20,7 @@ jdouble callGetDouble(JNIEnv* env, jobject javaArgs, int index);
 jfloat callGetFloat(JNIEnv* env, jobject javaArgs, int index);
 jboolean callGetBoolean(JNIEnv* env, jobject javaArgs, int index);
 jlong callGetLong(JNIEnv* env, jobject javaArgs, int index);
+jbyteArray callGetByteArray(JNIEnv* env, jobject javaArgs, int index);
 int arthook_bridge_init(JNIEnv* env, jclass cls);
 
 #endif

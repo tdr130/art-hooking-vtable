@@ -26,9 +26,12 @@ jobject set_dexloader(JNIEnv* env, char* dexfile, char* optdir)
     jclass c2 = loadClassFromClassLoader(env, dexloader, BRIDGE_UTILS );
     return gDexLoader;
 }
+//aggiungere una cache
 jint printStackTraceFromJava(JNIEnv* env)
 {
-    jclass test = findClassFromClassLoader(env,gDexLoader,BRIDGE_UTILS);
+    jclass test = findClassFromClassLoader(env, gDexLoader, BRIDGE_UTILS);
+
+    if(!test) return 0;
     jmethodID mid = (*env)->GetStaticMethodID(env, test, "printStackTraces", "()I");
     jint res = (*env)->CallStaticIntMethod(env, test, mid);
     return res;
@@ -55,7 +58,13 @@ jfloat callGetFloat(JNIEnv* env, jobject javaArgs, int index)
     jmethodID mid = (*env)->GetStaticMethodID(env, test, "getFloat", "([Ljava/lang/Object;I)F");
     jfloat res = (*env)->CallStaticFloatMethod(env, test, mid, javaArgs, index);
     return res;
-
+}
+jbyteArray callGetByteArray(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,BRIDGE_UTILS);
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getByteArray", "([Ljava/lang/Object;I)[B");
+    jbyteArray res = (*env)->CallStaticObjectMethod(env, test, mid, javaArgs, index);
+    return res;
 }
 jlong callGetLong(JNIEnv* env, jobject javaArgs, int index)
 {

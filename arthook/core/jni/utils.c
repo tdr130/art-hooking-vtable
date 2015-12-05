@@ -29,11 +29,13 @@ char* parseSignature(char* sig){
     char* p = sig;
     char* result = calloc(strlen(sig)+1, sizeof(char));
     char* copy = calloc(strlen(sig)+1, sizeof(char));
+    result[strlen(sig)+1] = 0x0;
     strcpy(copy, sig);
     char* token = strtok(copy, "( )");
     char* obj = strtok(token, ";");
     while( *p ){
         size_t counter = 0;
+        arthooklog("%s, porcodio1 vale: %c \n", __PRETTY_FUNCTION__, p[counter]);
         if(*p == ')')
             break;
         if(p[counter] == 'L'){
@@ -44,6 +46,12 @@ char* parseSignature(char* sig){
         }
         if(p[counter] == 'I'){
             strcat(result, "I|");
+        }
+        if(p[counter] == '['){
+            *p++;
+            if(p[counter] == 'B'){
+                strcat(result, "[B|");
+            }
         }
         *p++;
     }
