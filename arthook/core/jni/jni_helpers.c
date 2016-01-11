@@ -1,4 +1,4 @@
-#include "jni_wrappers.h"
+#include "jni_helpers.h"
 
 JNIEnv* getEnv() 
 {
