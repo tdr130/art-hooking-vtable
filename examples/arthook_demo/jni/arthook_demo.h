@@ -14,6 +14,7 @@
 #define MYDEX  "/data/local/tmp/dex/target.dex"
 #define MYOPTDIR  "/data/local/tmp/dex/opt"
 
+
 #define MYHOOKCLASS "org/sid/arthookbridge/HookCls"
 
 typedef struct{

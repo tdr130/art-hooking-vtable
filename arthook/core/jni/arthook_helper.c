@@ -11,18 +11,14 @@ static int set_hook(JNIEnv *env, arthook_t *h)
 {
     unsigned int* res;
     arthooklog("set_hook\n");
-    if(h->isSingleton){
-        // search the pointer inside the vtable
-        res = searchInMemoryVtable( (unsigned int) h->original_cls, (unsigned int) h->original_meth_ID, isLollipop(env), false);
-    }
-    else{
-        res = searchInMemoryVtable( (unsigned int) h->original_meth_ID, (unsigned int) h->original_meth_ID, isLollipop(env), false);
-    }
+
+
+    res = searchInMemoryVtable( (unsigned int) h->original_meth_ID, (unsigned int) h->original_meth_ID, isLollipop(env), false);
+
     if(res == 0) {
         LOGG("search returned 0\n");
         return 0;
     }
-    arthooklog("set_pointer 0x%08x with 0x%08x \n", (unsigned int) h->original_meth_ID, (unsigned int) h->hook_meth_ID);
     // change the pointer in the vtable
     set_pointer(res, (unsigned int ) h->hook_meth_ID);
 /*    
@@ -71,36 +67,17 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
     strcat(tmp->key,mname);
     strcat(tmp->key,msig);
 
-
-
-    // TODO: addding of this hook in an automate way
-    // SmsManager uses a singleton which in create at loading time
-    if(strstr(tmp->key, "sendTextMessage")) {
-        jclass cls = (*env)->FindClass(env, clsname);
-        jmethodID getd = (*env)->GetStaticMethodID(env,cls, "getDefault", "()Landroid/telephony/SmsManager;");
-        jobject res = (*env)->CallStaticObjectMethod(env, cls, getd);
-        jfieldID field = (*env)->GetStaticFieldID(env, cls, "sInstance", "Landroid/telephony/SmsManager;");
-        jobject o =  (*env)->GetStaticObjectField(env, cls, field);
-        arthooklog("singleton : %p \n", o);
-        arthooklog("SmsManager obj : %p\n", res);
-        jclass target =(*env)->GetObjectClass(env, o);
-        jmethodID mid = (*env)->GetMethodID(env,target, mname, msig);
-        arthooklog("singleton mid: %p \n", mid);
-        target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
-        arthooklog("target mid: %p \n", target_meth_ID);
-        gTarget = field;
-        tmp->isSingleton = false;
-    }
-    else{
-        // find the target class using JNI
-        target = (*env)->FindClass(env, clsname);
-        // make it a global ref for future access
-        gTarget = (jclass) (*env)->NewGlobalRef(env, target);
-        // get mid of the target method to hook
-        target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
-        tmp->isSingleton = false;
+    // find the target class using JNI
+    target = (*env)->FindClass(env, clsname);
+    arthooklog("%s, target class addr: 0x%X \n", __PRETTY_FUNCTION__, target);
+    // make it a global ref for future access
+    gTarget = (jclass) (*env)->NewGlobalRef(env, target);
+    // get mid of the target method to hook
+    target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
+    arthooklog("%s, target mid addr: 0x%X \n" , __PRETTY_FUNCTION__, target_meth_ID);
+    tmp->isSingleton = false;
         
-    }    
+
     // populate the arthook_t
     tmp->hook_meth_ID = hookm;
     tmp->original_meth_ID = target_meth_ID;
@@ -181,25 +158,28 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
  * Unbox arguments of a Java reflection call
  *
  */
-static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,jobject thiz, bool call_patchmeth)
+ jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,jobject thiz, bool call_patchmeth)
 {
     arthooklog("called %s with : %p \n", __PRETTY_FUNCTION__, javaArgs);
-    int * p = (int*) *javaArgs + 0x2;
     jobjectArray joa = (jobjectArray) javaArgs;
     int num = (*env)->GetArrayLength(env, joa);
-    arthooklog("array con numero elementi: %d !!!! \n", num);
-    jobject tmp;
+    arthooklog("array con numero elementi: %d, bool  = %d  !!!! \n", num, call_patchmeth);
+    jvalue* args = NULL;
     int counter = 0;
-    int index = 0;
+    if(num == 0 && !call_patchmeth)
+        return args;
     if(call_patchmeth)
         num += 1;
-
-    jvalue* args = calloc(num, sizeof(jvalue));
+    args = calloc(num, sizeof(jvalue));
+    if(call_patchmeth) {
+        args[0].l = thiz;
+        counter++;
+    }
     arthooklog("pd signature: %s\n", hook->msig);
-    char* res = parseSignature(hook->msig);
-    arthooklog("after parse signature: %s\n", res);
-    char* tok = strtok(res, "|");
-    jstring s;
+    parseSignature(env,hook->msig,args,joa, counter);
+    //arthooklog("after parse signature: %s\n", res);
+    return args;
+/*
     jobject o;
     jint i;
     jdouble d;
@@ -207,13 +187,14 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
     jboolean z;
     jlong j;
     jbyteArray jba;
+    jstring s;
+    jobject tmp;
+    int index = 0;
 
-    if(call_patchmeth) {
-        args[0].l = thiz;
-        counter++;
-    }
+    char* tok = strtok(res, "|");
     while(tok != NULL){
-        arthooklog("trovato : %s\n", tok);
+        arthooklog("trovato : %s, index : %d , total : %d\n", tok, index,num);
+        if(index >= num) break;
         if(*tok == 'L'){
             o = callGetObj(env, joa, (jint) index) ;
             arthooklog("Object %p  = %x, counter = %d\n", o, (unsigned int) o, counter);
@@ -222,7 +203,7 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
             index++;
         }
         else if(*tok == 'I'){
-            arthooklog("parser sto chiamanto getint su %c\n", *tok);
+            arthooklog("parser sto chiamanto getint su %c con index = %d \n", *tok, index);
             i = callGetInt(env, joa, (jint) index);
             arthooklog("int: %d\n", i);
             args[counter].i = i;
@@ -253,7 +234,7 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
         else if(*tok == '['){
             arthooklog("parser sto chiamando NULL su %c\n", *tok);
             //if(*tok == 'B') {
-                arthooklog("parser sto chiamanto getbytearray su %c\n", *tok);
+                arthooklog("parser sto chiamanto getbytearray su %c con index = %d\n", *tok, index);
                 jba = callGetByteArray(env, joa, (jint) index);
                 args[counter].l = jba;
                 counter++;
@@ -263,6 +244,8 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
         tok = strtok(NULL, "|");
     }
     return args;
+
+   */
 }
 
 static void* searchInMemory(unsigned int *start, unsigned int target, unsigned int* len){
@@ -274,10 +257,10 @@ static void* searchInMemory(unsigned int *start, unsigned int target, unsigned i
         //vtable bound check
         if(i > (*len * 4) + 4  )
             return 0;
-        arthooklog("check p = %p and target 0x%08x \n",p, target);
+        //arthooklog("check p = %p and target 0x%08x \n",p, target);
         if(! memcmp(p, g2, 4 )){
             unsigned int* found_at = (unsigned int*) (*start + i) ;
-            arthooklog("target VTABLE: 0x%08x at %p. start = %x, bytes = %d \n", target, found_at, *start, i);
+            arthooklog("%s, target method founded at: 0x%X = 0x%X \n", __PRETTY_FUNCTION__, found_at, *found_at);
             return found_at;
         }
         p += 4; i += 4;
@@ -303,11 +286,7 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
     }
     if(args){
         jclass t = (*env)->GetObjectClass(env, thiz);
-        if(strstr(hook->key, "sendTextMessage")){
-            (*env)->CallNonvirtualVoidMethodA(env, thiz, t, hook->original_meth_ID,args);
-        }
-        else
-            res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
+        res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
         if(res != NULL)
             return res;
            //return (*env)->NewGlobalRef(env, res);
@@ -359,40 +338,39 @@ static unsigned int* searchInMemoryVtable_kk(unsigned int start, int target, boo
 }
 static unsigned int* searchInMemoryVtable_all(unsigned int start, int target) {
     unsigned int* pClazz;
-    unsigned int* pAccess_flags;
     unsigned int* mid_handler;
     int* mid_index;
     int midvtable;
 
     //getting declaring_class_
     pClazz = (start + CLAZZ_OFF_);
-    arthooklog("pclazz vale: %p = %08x \n", pClazz, *pClazz);
+    arthooklog("pclazz vale:  0x%X \n", *pClazz);
     mid_index = (start + LOLLIPOP_MID_INDEX_OFF );
-    arthooklog("mid_index vale: %d \n", *mid_index);
+    arthooklog("mid_index vale: 0x%02x \n", *mid_index);
     arthooklog("ora calcolo %08x  + %d * 4 \n", *pClazz, *mid_index);
     midvtable = ((int)(*pClazz) + (*mid_index * 4));
-    arthooklog("midvtable vale: %d \n", midvtable);
+    arthooklog("midvtable vale: 0x%X \n", midvtable);
     mid_handler = midvtable + 0x170;
-    arthooklog("handler2: %p = %08x \n", mid_handler, *mid_handler);
+    arthooklog("handler2: %X = %08X \n", mid_handler, *mid_handler);
 
-    arthooklog("%s clazz: %p, * = 0x%08x , midindex = %08x [] handler=%p, * = 0x%08x \n", __PRETTY_FUNCTION__,
-               pClazz , *pClazz, *mid_index,
-               mid_handler, *mid_handler);
+    //arthooklog("%s clazz: %p, * = 0x%08x , midindex = %08x [] handler=%p, * = 0x%08x \n", __PRETTY_FUNCTION__,
+    //           pClazz , *pClazz, *mid_index,
+    //           mid_handler, *mid_handler);
     return mid_handler;
 }
 /*
    Search a pointer in  the process' virtual memory, starting from address @start.
 
 */
-static unsigned int* searchInMemoryVtable(unsigned int start, int gadget, int lollipop, bool isClass){
-    arthooklog("%s start : 0x%08x, gadget 0x%08x, lollipop = %d \n", __PRETTY_FUNCTION__, start, gadget, lollipop);
+static unsigned int* searchInMemoryVtable(unsigned int start, int target, int lollipop, bool isClass){
+    //arthooklog("%s start : 0x%08x, gadget 0x%08x, lollipop = %d \n", __PRETTY_FUNCTION__, start, gadget, lollipop);
     // > 4.4.4 offsets
     if(lollipop){
-        return searchInMemoryVtable_all(start,gadget);
+        return searchInMemoryVtable_all(start,target);
     }
     //kitkat 4.4.4 with art offsets
     else{
-        return searchInMemoryVtable_kk(start,gadget,isClass);
+        return searchInMemoryVtable_kk(start,target,isClass);
     }
 }
 

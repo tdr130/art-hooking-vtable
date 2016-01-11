@@ -25,14 +25,143 @@ int isLollipop(JNIEnv *env)
     else return 0;
 }
 
-char* parseSignature(char* sig){
+
+static void _helper(JNIEnv* env, char *src, char* result, bool array, jvalue* args, int counter, int index, jobjectArray joa) {
+    if (!src) return;
+    arthooklog("src vale: %c, result: %s \n", *src, result);
+    switch (*src) {
+        case ')':
+            break;
+        case 'B':
+            if (array) {
+                strcat(result, "[B|");
+                arthooklog("parser sto chiamanto getbytearray su %c con index = %d\n", *src, index);
+                args[counter].l = callGetByteArray(env, joa, (jint) index);
+                counter++;index++;
+            }
+            else {
+                strcat(result, "B|");
+            }
+            *src++;
+            return _helper(env, src, result, 0, args, counter, index,joa);
+            break;
+        case 'D':
+            if (array) {
+                strcat(result, "[D|");
+            }
+            else {
+                strcat(result, "D|");
+                args[counter].d = callGetDouble(env, joa, (jint) index);
+                counter++;index++;
+            }
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+        case 'Z':
+            if (array)
+                strcat(result, "[Z|");
+            else {
+                strcat(result, "Z|");
+                args[counter].z = callGetBoolean(env, joa, (jint) index);
+                counter++;index++;
+            }
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+        case 'J':
+            if (array)
+                strcat(result, "[J|");
+            else
+                strcat(result, "J|");
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+        case 'I':
+            if (array)
+                strcat(result, "[I|");
+            else {
+                strcat(result, "I|");
+                arthooklog("parser sto chiamanto getint su %c con index = %d \n", *src, index);
+                args[counter].i = callGetInt(env, joa, (jint) index);
+                counter++;index++;
+            }
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+        case '[':
+            *src++;
+            return _helper(env,src, result, 1, args, counter, index,joa);
+            break;
+        case 'L':
+            if (array) {
+                strcat(result, "[L|");
+                args[counter].l = callGetObj(env, joa, (jint) index) ;
+                index++; counter++;
+            }
+            else {
+                strcat(result, "L|");
+                args[counter].l = callGetObj(env, joa, (jint) index);
+                counter++;index++;
+            }
+            //search end obj
+            char *res = strchr(src, ';');
+            //goto end
+            src = res;
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+        default:
+            *src++;
+            return _helper(env,src, result, 0, args, counter, index,joa);
+            break;
+    }
+}
+//static void _helper(JNIEnv* env, char *src, char* result, bool array,
+// jvalue* args, int counter, int index, jobjectArray joa) {
+
+char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter){
     char* p = sig;
     char* result = calloc(strlen(sig)+1, sizeof(char));
-    char* copy = calloc(strlen(sig)+1, sizeof(char));
     result[strlen(sig)+1] = 0x0;
-    strcpy(copy, sig);
-    char* token = strtok(copy, "( )");
-    char* obj = strtok(token, ";");
+    _helper(env, p,result,0,args, counter, 0, joa);
+    free(result);
+}
+
+jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args)
+{
+    arthooklog("%s \n", __PRETTY_FUNCTION__);
+    arthooklog("%s sig: %s \n", __PRETTY_FUNCTION__, sig);
+    char* p = strchr(sig, ')');
+    arthooklog("%s sig: %s \n", __PRETTY_FUNCTION__, p);
+    p++;
+    arthooklog("%s switch on %c \n", __PRETTY_FUNCTION__, *p);
+    switch(*p){
+        case 'V':
+            callOriginalVoidMethod(env, thiz, c, mid, args);
+            return NULL;
+            break;
+        case 'L':
+            return callOriginalObjectMethod(env, thiz, c, mid, args);
+            break;
+        default:
+            break;
+    }
+}
+/*
+ *
+ * Signature : (Ljava/lang/Class;IBZDJ)V
+
+char* parseSignature(char* sig){
+    char* p = sig;
+    int i = 0;
+    char* result = calloc(strlen(sig)+1, sizeof(char));
+    //char* copy = calloc(strlen(sig)+1, sizeof(char));
+    result[strlen(sig)+1] = 0x0;
+    //strcpy(copy, sig);
+    //get arguments
+    //char* token = strtok(copy, "( )");
+    //get object type
+    //char* obj = strtok(token, ";");
     while( *p ){
         size_t counter = 0;
         arthooklog("%s, porcodio1 vale: %c \n", __PRETTY_FUNCTION__, p[counter]);
@@ -40,7 +169,9 @@ char* parseSignature(char* sig){
             break;
         if(p[counter] == 'L'){
             strcat(result, "L|");
+            //search end obj
             char* res = strchr(p, ';');
+            //goto end
             p = res;
             counter = (res - sig + 1);
         }
@@ -49,6 +180,7 @@ char* parseSignature(char* sig){
         }
         if(p[counter] == '['){
             *p++;
+
             if(p[counter] == 'B'){
                 strcat(result, "[B|");
             }
@@ -57,6 +189,7 @@ char* parseSignature(char* sig){
     }
     return result;
 }
+ */
 void breakMe()
 {
     return;

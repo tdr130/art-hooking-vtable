@@ -109,3 +109,11 @@ jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetNa
     return (jclass) globalref;
 }
 
+int jni_check_for_exception(JNIEnv* env){
+    jboolean flag = (*env)->ExceptionCheck(env);
+    if(flag){
+        (*env)->ExceptionClear(env);
+        return 1;
+    }
+    return 0;
+}

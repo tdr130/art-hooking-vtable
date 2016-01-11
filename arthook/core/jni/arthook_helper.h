@@ -48,5 +48,5 @@ static unsigned int* searchInMemoryVmeths(unsigned int , int , int );
 void* hh_check_javareflection_call(JNIEnv *, jobject, jobject );
 void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp, jobject);
 jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject);
-
+jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,jobject thiz, bool call_patchmeth);
 #endif

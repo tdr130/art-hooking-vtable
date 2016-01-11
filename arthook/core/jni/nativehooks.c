@@ -13,14 +13,16 @@ void set_hookdemo_init(void* func){
     hookdemo_init = func;
 }
 
-void init_hook()
+int init_hook(JNIEnv* env)
 {
     arthooklog("dentro %s ... \n", __PRETTY_FUNCTION__);
-    JNIEnv* env = get_jnienv();
-    //arthook_manager_init(env);
-    hookdemo_init(env);
+    if(hookdemo_init(env)){
+        return 0;
+    }
+    return 1;
 }
 
+//NOT USED!!!
 int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 {
     if (pthread_mutex_lock(&epoll_lock) != 0) return 1;
@@ -30,7 +32,7 @@ int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeo
     hook_precall(&eph);
     int res = orig_epoll_wait(epfd, events, maxevents, timeout);
     if(!done) {
-        init_hook();
+        //init_hook();
         //_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b
         hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_",
              my_epoll_wait_arm, my_invoke_method);
@@ -44,13 +46,27 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     arthooklog("!!! %s receiver : 0x%08x, javamethod : 0x%08x \n", __PRETTY_FUNCTION__,
                (unsigned int) javaReceiver,  (unsigned int) javaMethod);
 
+    void* (*orig_invoke_method)(void* soa, void* javaMethod, void* javaReceiver, void* javaArgs);
     void* checkcalledmethod = (void*) 0;
     void* res = NULL;
     jint checkstack = 0;
+
+    orig_invoke_method = (void*) invokeh.orig;
+
     JNIEnv* th_env = get_jnienv();
+    if(!th_env){
+        LOGG("ERROR getting JNIEnv* \n");
+        goto error;
+    }
     arthooklog("env  =  %p \n", th_env);
 
-    if(done==0) {init_hook(); done=1;}
+    if(done==0) {
+        if(init_hook(th_env)){
+            LOGG("ERROR on init_hook()\n");
+            goto error;
+        }
+        done=1;
+    }
 
     checkstack = printStackTraceFromJava(th_env);
 
@@ -60,15 +76,13 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     // 1. the method called with reflection is hooked?
     // 2. the call is from our patch method?
     //
-    void* (*orig_invoke_method)(void* soa, void* javaMethod, void* javaReceiver, void* javaArgs);
-    orig_invoke_method = (void*) invokeh.orig;
     //checkcalledmethod = 0;
     // called method is not an hooked method
     if(!checkcalledmethod){
         arthooklog("called method is not an hooked method, return to normal flow \n");
         hook_precall(&invokeh);
         res = orig_invoke_method(soa,javaMethod,javaReceiver,javaArgs);
-        hook_postcall(&invokeh);
+        //hook_postcall(&invokeh);
         arthooklog("end originalcall\n");
     }
     else{
@@ -86,5 +100,9 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
         }
     }
     return res;
+
+error:
+    hook_precall(&invokeh);
+    return 0;
 }
 

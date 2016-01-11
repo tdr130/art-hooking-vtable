@@ -6,9 +6,6 @@
 #include "arthook_manager.h"
 #include "utils.h"
 
-#define JARPATH "/data/local/tmp/"
-#define ARTHBRIDGE "arthookbridge.jar"
-
 #define BRIDGE_UTILS "org/sid/arthookbridge/Utils"
 jclass load_class_from_dex(JNIEnv* env, jobject, char* clsname);
 jobject set_dexloader(JNIEnv* env, char*, char*);
@@ -22,5 +19,6 @@ jboolean callGetBoolean(JNIEnv* env, jobject javaArgs, int index);
 jlong callGetLong(JNIEnv* env, jobject javaArgs, int index);
 jbyteArray callGetByteArray(JNIEnv* env, jobject javaArgs, int index);
 int arthook_bridge_init(JNIEnv* env, jclass cls);
-
+void callOriginalVoidMethod(JNIEnv* env, jobject thiz,jclass c, jmethodID mid, jvalue* args);
+jobject callOriginalObjectMethod(JNIEnv* env, jobject thiz,jclass c, jmethodID mid, jvalue* args);
 #endif

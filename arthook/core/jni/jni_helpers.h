@@ -6,14 +6,16 @@
 #include "globals.h" 
 #include "artstuff.h"
 
-extern JNIEnv* getEnv();
+JNIEnv* getEnv();
 
-extern jobject createDexClassLoader(JNIEnv* , jobject, char*, char* );
+jobject createDexClassLoader(JNIEnv* , jobject, char*, char* );
 
-extern jobject getSystemClassLoader(JNIEnv*);
+jobject getSystemClassLoader(JNIEnv*);
 
-extern jclass findClassFromClassLoader(JNIEnv* , jobject , char*);
+jclass findClassFromClassLoader(JNIEnv* , jobject , char*);
 
-extern jclass loadClassFromClassLoader(JNIEnv* , jobject , char*);
+jclass loadClassFromClassLoader(JNIEnv* , jobject , char*);
+
+int jni_check_for_exception(JNIEnv* env);
 
 #endif

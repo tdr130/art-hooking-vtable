@@ -9,30 +9,17 @@
 #include "modifiers.h"
 #include "globals.h"
 #include "uthash.h"
-#include "jni_wrappers.h"
+#include "jni_helpers.h"
+#include "arthook_bridge.h"
 
 #undef NELEM
 #define NELEM(x)            (sizeof(x)/sizeof(*(x)))
-
-
-
-#define MNAME "getId"
-#define MSIG "()Ljava/lang/String;"
-
-#define CNAME "test/sid/org/ndksample/HelloPrinter"
-#define TARGET_CLS "android/telephony/TelephonyManager"
-
-#define HOOKCLS "test/sid/org/ndksample/HookCls"
-#define HOOKM "getDeviceId"
-#define HOOKMSIG "()Ljava/lang/String;"
 
 #define MAXSIZE 512
 
 
 
-
 jint getAPIVersion(JNIEnv *);
-void breakMe();
 void set_pointer(unsigned int *, unsigned int );
 jmethodID getMethodID(JNIEnv *,jclass , char *, char* );
 jmethodID fromObjToMethodID(JNIEnv *, jobject , char *, char *);
@@ -41,5 +28,6 @@ jclass _findClass(JNIEnv* , char* );
 jobject createInstanceFromClsName(JNIEnv* , char* );
 jobject createInstanceFromJClsName(JNIEnv* , jstring );
 char* getCharFromJstring(JNIEnv* , jstring );
-char* parseSignature(char* sig);
+char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter);
+jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args);
 #endif

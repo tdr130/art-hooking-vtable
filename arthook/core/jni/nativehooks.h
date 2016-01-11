@@ -12,7 +12,7 @@
 #include "hook.h"
 
 
-void (*hookdemo_init)(JNIEnv *env);
+int (*hookdemo_init)(JNIEnv *env);
 
 /*
 extern struct hook_t invokeh;

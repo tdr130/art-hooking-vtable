@@ -107,23 +107,89 @@ jobject create_hook_from_java(JNIEnv* env,jstring _cname, jstring _mname,jstring
     add_hook(tmp);
 */
 }
+static void _callOriginalMethod(JNIEnv* env, jobject obj, jstring key, jobject thiz,
+                                jbyteArray jba, jint offset, jint size) {
+    char *mykey = getCharFromJstring(env, key);
+    arthooklog("%s key = %s\n", __PRETTY_FUNCTION__, mykey);
+    arthook_t *target = get_hook_by_key(mykey);
+    jclass c = (*env)->GetObjectClass(env, thiz);
+    (*env)->CallNonvirtualObjectMethod(env, thiz, c, target->original_meth_ID, jba, offset, size);
+}
+void callOriginalVoidMethod(JNIEnv* env, jobject thiz,jclass c, jmethodID mid, jvalue* args)
+{
+    arthooklog("%s\n", __PRETTY_FUNCTION__);
+    (*env)->CallNonvirtualVoidMethodA(env, thiz, c, mid, args);
+}
+jobject callOriginalObjectMethod(JNIEnv* env, jobject thiz,jclass c, jmethodID mid, jvalue* args)
+{
+    arthooklog("%s\n", __PRETTY_FUNCTION__);
+    return (*env)->CallNonvirtualObjectMethodA(env, thiz, c, mid, args);
+}
+static jobject _callOriginalMethod2(JNIEnv* env, jobject obj, jstring key, jobject thiz,
+                                jobjectArray joa) {
+    /*
+        jsize i = 0;
+    jint k,z;
+    jbyteArray jba;
+    va_list list;
+    va_start(list, numargs);
 
+    for(i=0;i<numargs;i++){
+        if(i==0) {
+            jba = va_arg(list, jobject);
+            args[i].l = jba;
+            arthooklog("%s jvalue[%d] = %x \n", __PRETTY_FUNCTION__, i, jba);
+        }
+        else {
+            k = va_arg(list, jint);
+            args[i].i = k;
+            arthooklog("%s jvalue[%d] : %d  = %d \n", __PRETTY_FUNCTION__, i, k, args[i].i);
+        }
+    }
+    va_end( list );
+    return;
+    */
+    char *mykey = getCharFromJstring(env, key);
+    arthook_t *target = get_hook_by_key(mykey);
+    if(!target) return NULL;
+    arthooklog("%s key = %s\n", __PRETTY_FUNCTION__, mykey);
+    jvalue* p = tryToUnbox(env, target, joa, thiz, false);
+    arthooklog("%s after try to unbox \n", __PRETTY_FUNCTION__);
+    jclass c = (*env)->GetObjectClass(env, thiz);
+    arthooklog("%s checkreturntype: %s \n", __PRETTY_FUNCTION__, target->msig);
+    jobject o = parseReturnType(env,target->msig,thiz,c,target->original_meth_ID, p);
+    if(o != NULL)
+        return (*env)->NewGlobalRef(env, o);
+    //(*env)->CallNonvirtualVoidMethodA(env, thiz, c, target->original_meth_ID, p);
+}
 static JNINativeMethod artHookMethods[] = {
     /* name, signature, funcPtr */ 
     //create_hook wrapper
+        /*
     {"createHookFromJava",
             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
             (void*) create_hook_from_java },
+            */
+    {"callOriginalMethod",
+            "(Ljava/lang/String;Ljava/lang/Object;[BII)V",
+            (void*) _callOriginalMethod },
+    {"callOriginalMethod2",
+            "(Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
+            (void*) _callOriginalMethod2 },
 };
 static int jniRegisterNativeMethods(JNIEnv* env, jclass cls)
 {
     if ((*env)->RegisterNatives(env, cls, artHookMethods, NELEM(artHookMethods)) < 0) {
         return 1;
     }
+    arthooklog("%s native methods registered!! \n", __PRETTY_FUNCTION__);
     return 0;
 }
 int arthook_bridge_init(JNIEnv* env, jclass cls){
-    jniRegisterNativeMethods(env,cls);
+    arthooklog("%s chiamato \n", __PRETTY_FUNCTION__);
+    if( jniRegisterNativeMethods(env,cls) )
+        return 1;
+    else return 0;
 }
 
 
