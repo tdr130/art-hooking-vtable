@@ -3,30 +3,49 @@
 //
 
 
+#include <stdio.h>
 #include "main.h"
 
-static struct config_t* myconfig;
-
-struct config_t* arthook_entrypoint(char* config_fname){
-    myconfig =  (struct config_t*) config_init(config_fname);
-    if(myconfig == NULL) return 0;
-    return myconfig;
-}
-
-
+static struct config_t* myconfig = NULL;
+static JNIEnv* th_env = NULL;
 int done = 0;
 struct hook_t invokeh;
 struct hook_t eph ;
 pthread_mutex_t epoll_lock ;
 
+struct config_t* arthook_entrypoint_start(char *config_fname){
+    arthooklog("%s called \n", __PRETTY_FUNCTION__ );
+    th_env = get_jnienv();
+    if( th_env == NULL ) return NULL;
+    myconfig =  (struct config_t*) config_init(config_fname);
+    if(myconfig == NULL) return NULL;
+    if(arthook_manager_init(th_env)){
+        LOGG("ERROR on manager init!!\n");
+        return NULL;
+    }
+    return myconfig;
+}
+
+void* arthook_entrypoint_end(void* mycls){
+    if( arthook_bridge_init( get_global_jnienv(), (jclass) mycls)){
+        LOGG("ERROR arthookbridge: register native methods \n");
+        return NULL;
+    }
+}
+
+JNIEnv* get_global_jnienv(){
+    return th_env;
+}
+
+
 void set_hookdemo_init(void* func){
     hookdemo_init = func;
 }
 
-int init_hook(JNIEnv* env)
+int init_hook()
 {
     arthooklog("dentro %s ... \n", __PRETTY_FUNCTION__);
-    if(hookdemo_init(env) == 1){
+    if(hookdemo_init() == 1){
         return 1;
     }
     return 0;
@@ -63,25 +82,22 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
 
     orig_invoke_method = (void*) invokeh.orig;
 
-    JNIEnv* th_env = get_jnienv();
-    if(!th_env){
-        LOGG("ERROR getting JNIEnv* \n");
-        goto error;
-    }
-    arthooklog("env  =  %p \n", th_env);
-
     if(done==0) {
-        if(init_hook(th_env)){
+        if(init_hook()){
             LOGG("ERROR on %s\n", __PRETTY_FUNCTION__);
             goto error;
         }
         done=1;
     }
-
-    checkstack = printStackTraceFromJava(th_env);
+    JNIEnv *myenv = get_global_jnienv();
+    if(myenv == NULL){
+        LOGG("ERROR getting JNIEnv* \n");
+        goto error;
+    }
+    checkstack = printStackTraceFromJava(myenv);
 
     // check if an hooked method is the target of the reflection call
-    checkcalledmethod = hh_check_javareflection_call(th_env, javaMethod, javaReceiver);
+    checkcalledmethod = hh_check_javareflection_call(myenv, javaMethod, javaReceiver);
     // checks:
     // 1. the method called with reflection is hooked?
     // 2. the call is from our patch method?
@@ -100,13 +116,13 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
             // trapped call is from a "patch method"
             // so we have to direct call the original method
             arthooklog("trapped call is from trusted patch code, calling original method \n");
-            return callOriginalReflectedMethod(th_env, javaReceiver, (arthook_t*) checkcalledmethod, javaArgs);
+            return callOriginalReflectedMethod(myenv, javaReceiver, (arthook_t*) checkcalledmethod, javaArgs);
         }
         else{
             // call the "patch method"
             //
             arthooklog("ok hooked method founded, calling patch method \n");
-            return call_patch_method(th_env, (arthook_t*) checkcalledmethod, javaReceiver, javaArgs);
+            return call_patch_method(myenv, (arthook_t*) checkcalledmethod, javaReceiver, javaArgs);
         }
     }
     return res;
