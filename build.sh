@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sh clean.sh
+
 cd adbi
 sh build.sh
 cd ../
