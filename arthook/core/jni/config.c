@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/errno.h>
 
 #include "config.h"
 #include "arthook_manager.h"
@@ -88,7 +89,7 @@ int parse_simply(struct config_t* c){
     char* file_contents;
     json_char* json;
     json_value* node;
-    arthooklog("ricevuto: %x  = %s \n", c->fname, c->fname);
+
     if( stat(c->fname, &file_status) != 0 ){
         LOGG("ERROR stat on %s\n", c->fname);
         return 1;
@@ -131,27 +132,8 @@ static int  program_version(){
     return atoi(VERSION);
 }
 
-static char* _getprop(char* command){
-    char buffer[128];
-    FILE* fp = popen(command, "r");
-    if(fp == NULL){
-        LOGG("ERROR getprop\n");
-        return 1;
-    }
-    while( !feof(fp) ){
-        if( fgets(buffer, 128, fp) != NULL){
-            if(strstr(buffer, "libart.so") != NULL) return 1;
-        }else{
-            pclose(fp);
-            return 1;
-        }
-    }
-    pclose(fp);
-    return 0;
-}
-
 static int _check_runtime(){
-    if(_getprop(command_runtime))
+    if(_getprop(command_runtime, "libart.so"))
         return 1;
     else return 0;
 }
@@ -171,8 +153,8 @@ static char* _config_create_env(){
     sprintf(ppid,"%d",getpid());
     strcat(tmpdir,ppid);
     arthooklog("creo working dir: %s \n", tmpdir);
-    if( mkdir(tmpdir,S_IRWXU) ){
-        LOGG("ERROR mkdir!!\n");
+    if( mkdir(tmpdir, 0777) != 0 ){
+        LOGG("ERROR mkdir: %s \n", strerror(errno));
         return 0;
     }
     if( chdir(tmpdir) ){
@@ -204,8 +186,13 @@ void* config_init(char* fname){
     }
 
     c->version = program_version();
-    c->osversion = 0;
-
+    int api = (int) getAPIVersion();
+    if( api == 1){
+        LOGG("ERROR GETTING API VERSION\n");
+        free(c);
+        return NULL;
+    }
+    c->osversion = api;
     if( _check_runtime() == 0 ){
         LOGG("ERROR you must set the ART as default runtime!! \n");
         free(c);

@@ -1,10 +1,11 @@
 /*
  * Contains functions exposed to the Java side
- *
+ * and helper functions used to call Java functions
  *
  */
 
 #include "arthook_bridge.h"
+#include "config.h"
 
 static jobject gDexLoader;
 
@@ -18,10 +19,11 @@ jclass load_class_from_dex(JNIEnv* env, jobject dexloader, char* clsname)
     jclass c = loadClassFromClassLoader(env, dexloader,clsname );
     return c;
 }
-jobject set_dexloader(JNIEnv* env, char* dexfile, char* optdir)
+jobject set_dexloader(JNIEnv* env, char* dexfile, struct config_t* c)
 {
+    arthooklog("%s CALLED with optdir = %s \n", __PRETTY_FUNCTION__, c->optdir);
     jobject systemCL = getSystemClassLoader(env);
-    jobject dexloader  = createDexClassLoader(env, systemCL, dexfile, optdir);
+    jobject dexloader  = createDexClassLoader(env, systemCL, dexfile, c->optdir);
     gDexLoader = (*env)->NewGlobalRef(env, dexloader);
     jclass c2 = loadClassFromClassLoader(env, dexloader, BRIDGE_UTILS );
     return gDexLoader;

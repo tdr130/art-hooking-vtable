@@ -1,4 +1,4 @@
-
+#include <stdio.h>
 #include "utils.h"
 
 
@@ -8,7 +8,13 @@
     @retval int API number version
 
 */
-jint getAPIVersion(JNIEnv *env){
+jint getAPIVersion(){
+    LOGG("%s CALLED!!!\n", __PRETTY_FUNCTION__);
+    JNIEnv *env = get_global_jnienv();
+    if(env == NULL){
+        LOGG("ERROR %s getting jni\n", __PRETTY_FUNCTION__);
+        return 1;
+    }
     jclass versionClass = (*env)->FindClass(env, "android/os/Build$VERSION");
     jfieldID sdkIntFieldID = (*env)->GetStaticFieldID(env, versionClass, "SDK_INT", "I");
     jint sdkInt = (*env)->GetStaticIntField(env, versionClass, sdkIntFieldID);
@@ -17,9 +23,9 @@ jint getAPIVersion(JNIEnv *env){
 
 }
 
-int isLollipop(JNIEnv *env)
+int isLollipop()
 {
-    jint res = getAPIVersion(env);
+    jint res = getAPIVersion();
     if(res > 19 )
         return 1;
     else return 0;
@@ -226,7 +232,26 @@ jobject createInstanceFromClsName(JNIEnv* env, char* clsname)
     arthooklog("ok\n");
     return targetcls;
 }
-
+//return 1 if 'searchme' is founded in the output of 'command'
+//0 altrimenti
+char* _getprop(char* command, char* searchme){
+    char buffer[128];
+    FILE* fp = popen(command, "r");
+    if(fp == NULL){
+        LOGG("ERROR getprop\n");
+        return 0;
+    }
+    while( !feof(fp) ){
+        if( fgets(buffer, 128, fp) != NULL){
+            if(strstr(buffer, searchme) != NULL) return 1;
+        }else{
+            pclose(fp);
+            return 0;
+        }
+    }
+    pclose(fp);
+    return 0;
+}
 /*
    unsigned int revgadget;
    revgadget =  ((gadget>>24)&0xff) | // move byte 3 to byte 0

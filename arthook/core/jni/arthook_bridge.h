@@ -5,10 +5,12 @@
 #include "arthook_helper.h"
 #include "arthook_manager.h"
 #include "utils.h"
+#include "config.h"
 
 #define BRIDGE_UTILS "org/sid/arthookbridge/Utils"
+
 jclass load_class_from_dex(JNIEnv* env, jobject, char* clsname);
-jobject set_dexloader(JNIEnv* env, char*, char*);
+jobject set_dexloader(JNIEnv* env, char* dexfile, struct config_t* c);
 jobject get_dexloader();
 jint printStackTraceFromJava(JNIEnv* env);
 jint callGetInt(JNIEnv* env, jobject javaArgs, int index);

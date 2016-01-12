@@ -14,6 +14,7 @@ JNIEnv* getEnv()
 }
 
 extern JNIEnv* get_jnienv(){
+    arthooklog("%s called!!\n", __PRETTY_FUNCTION__);
 	jsize vm_count = NULL;
 	jsize size = NULL;
     if(vms == NULL)

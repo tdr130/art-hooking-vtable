@@ -19,15 +19,16 @@
 
 
 
-jint getAPIVersion(JNIEnv *);
+jint getAPIVersion();
 void set_pointer(unsigned int *, unsigned int );
 jmethodID getMethodID(JNIEnv *,jclass , char *, char* );
 jmethodID fromObjToMethodID(JNIEnv *, jobject , char *, char *);
-int isLollipop(JNIEnv *);
+int isLollipop();
 jclass _findClass(JNIEnv* , char* );
 jobject createInstanceFromClsName(JNIEnv* , char* );
 jobject createInstanceFromJClsName(JNIEnv* , jstring );
 char* getCharFromJstring(JNIEnv* , jstring );
 char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter);
 jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args);
+char* _getprop(char* command, char*);
 #endif

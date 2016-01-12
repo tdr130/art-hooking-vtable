@@ -30,7 +30,7 @@ void call_test_asm(struct artstuff_t *d){
 int resolve_symbols(struct artstuff_t *d){
 	d->art_hand = dlopen("libart.so", RTLD_NOW);
 	arthooklog("art_hand = 0x%08x \n", (unsigned int) d->art_hand);
-	if(d->art_hand){
+	if(d->art_hand != NULL){
 		d->JNI_GetCreatedJavaVMs_fnPtr = mydlsym(d->art_hand, "JNI_GetCreatedJavaVMs");
         d->art_th_currentFromGdb_fnPtr = mydlsym(d->art_hand, "_ZN3art6Thread14CurrentFromGdbEv");
         d->art_dbg_SuspendVM_fnPtr = mydlsym(d->art_hand, "_ZN3art3Dbg9SuspendVMEv");
