@@ -17,8 +17,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libarthook
 LOCAL_SRC_FILES := artstuff.c   
-LOCAL_SRC_FILES += utils.c arthook_helper.c arthook_manager.c nativehooks.c
-LOCAL_SRC_FILES += jni_helpers.c  arthook_bridge.c epoll_arm.c.arm
+LOCAL_SRC_FILES += utils.c arthook_helper.c arthook_manager.c
+LOCAL_SRC_FILES += jni_helpers.c  arthook_bridge.c epoll_arm.c.arm json_parser/json.c
+LOCAL_SRC_FILES += config.c main.c
 LOCAL_C_INCLUDES := ../../../adbi/instruments/base/
 #LOCAL_INCLUDE   := ../../adbi/instruments/base/hook.h
 LOCAL_CFLAGS := -g -std=gnu99
