@@ -17,7 +17,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libarthookdemo
-LOCAL_SRC_FILES := arthook_demo.c
+LOCAL_SRC_FILES := arthook_demo.c log.c
 LOCAL_C_INCLUDES := ../../../adbi/instruments/base/ ../../../arthook/core/jni/
 LOCAL_LDLIBS    := -L../../../arthook/core/jni/libs -ldl -llog
 LOCAL_LDLIBS    += -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a ../../../arthook/core/obj/local/armeabi/libarthook.a -Wl,--end-group

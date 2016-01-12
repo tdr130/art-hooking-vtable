@@ -26,13 +26,10 @@ typedef struct{
     jmethodID target;
 } WrapMethodsToHook;
 
-extern int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
-extern void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs);
-extern void set_hookdemo_init(void* func);
-extern struct hook_t invokeh;
-extern struct hook_t eph;
+extern void set_hookdemo_init(void* func);;
 extern pthread_mutex_t lock;
-
+extern void my_log(char *msg);
+extern void artlogmsgtofile(char* msg);
 int my_hookdemo_init();
 
 #endif

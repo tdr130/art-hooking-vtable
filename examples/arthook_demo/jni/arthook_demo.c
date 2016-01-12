@@ -1,15 +1,11 @@
 #include <stdio.h>
 #include <fcntl.h>
-#include <string.h>
 #include <sys/epoll.h>
 #include <pthread.h>
 #include <jni.h>
-#include <stdlib.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include "arthook_demo.h"
-#include "../../../arthook/core/jni/config.h"
 
 
 static WrapMethodsToHook methodsToHook[] = {
@@ -142,45 +138,9 @@ int my_hookdemo_init()
     return 0;
 }
 
-static char logfile[] = "/data/local/tmp/adbi.log";
 
-#undef log
-#define log(...) \
-        {FILE *fp = fopen(logfile, "a+"); if (fp) {\
-        fprintf(fp, __VA_ARGS__);\
-        fclose(fp);}}
-
-static int done = 0;
-char artlogfile[]  = "/data/local/tmp/arthook.log";
 
 JavaVM* vms = NULL;
-
-// arm version of hook
-extern int my_epoll_wait_arm(int epfd, struct epoll_event *events, int maxevents, int timeout);
-extern void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs);
-
-/*
- *  log function to pass to the hooking library to implement central loggin
- *
- *  see: set_logfunction() in base.h
- */
-static void my_log(char *msg)
-{
-    log("%s", msg);
-}
-void artlogmsgtofile(char* msg){
-    int fp = open(artlogfile, O_WRONLY|O_APPEND);
-    if (fp != -1) {
-        write(fp, msg, strlen(msg));
-        close(fp);
-    }
-}
-
-void* set_arthooklogfunction(void* func){
-    void* old = log_function;
-    log_function = func;
-    return old;
-}
 
 void __attribute__ ((constructor)) my_init(void);
 
@@ -209,30 +169,7 @@ void my_init(void)
     // hook native functions
     //hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     //init_hook();
-
-    //checking running version before hook native
-    //[ro.build.version.release]: [5.1.1]
-    //[ro.build.version.sdk]: [22]
     arthooklog("running on api version %d \n", configuration->osversion);
-
-    if(configuration->osversion <= 19 ){
-        if(hook(&invokeh, getpid(), "libart.",
-                "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_",
-                NULL, my_invoke_method) == 0){
-            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_!!\n");
-            return;
-        }
-    }
-    else{
-        if(hook(&invokeh, getpid(), "libart.",
-                "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
-                NULL, my_invoke_method) == 0){
-            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b!!\n");
-            return;
-        }
-    }
-
-
     arthooklog("%s  ended\n\n", __PRETTY_FUNCTION__);
 }
 
