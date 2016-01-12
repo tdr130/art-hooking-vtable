@@ -7,7 +7,6 @@
 #include "arthook_helper.h"
 #include "artstuff.h"
 
-//#include "nativehooks.h"
 #include "base.h"
 
 
@@ -34,6 +33,6 @@ extern struct hook_t invokeh;
 extern struct hook_t eph;
 extern pthread_mutex_t lock;
 
-int my_hookdemo_init(JNIEnv*);
+int my_hookdemo_init();
 
 #endif

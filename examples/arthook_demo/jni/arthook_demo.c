@@ -9,6 +9,8 @@
 #include <unistd.h>
 
 #include "arthook_demo.h"
+#include "../../../arthook/core/jni/config.h"
+
 
 static WrapMethodsToHook methodsToHook[] = {
         {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
@@ -83,60 +85,38 @@ static WrapMethodsToHook methodsToHook[] = {
 */
 };
 
+static struct config_t* configuration = NULL;
 
 
-int my_hookdemo_init(JNIEnv* env)
+int my_hookdemo_init()
 {
-    char tmpdir[256];
-    char ppid[8];
+
     jobject dexloader;
     jclass mycls;
-
     arthooklog("dentro %s, starting %d ....\n", __PRETTY_FUNCTION__, getpid());
-    if(arthook_manager_init(env)){
-        //ERRORS -> LOGCAT
-        LOGG("ERROR on init!!\n");
-        return 1;
-    }
-    sprintf(tmpdir,"%s/",MYOPTDIR);
-    //zygote fix
-    //entro dentro la cartella tmp_root e creo una mia dir
-    if( chdir(MYOPTDIR) ){
-        LOGG("ERROR chdir!!\n");
-        return 1;
-    }
-    sprintf(ppid,"%d",getpid());
-    strcat(tmpdir,ppid);
-    arthooklog("creo working dir: %s \n", tmpdir);
-    if( mkdir(tmpdir,S_IRWXU) ){
-        LOGG("ERROR mkdir!!\n");
-        return 1;
-    }
-    if( chdir(tmpdir) ){
-        LOGG("ERROR chdir!!\n");
-        return 1;
-    }
-    arthooklog("finito creazione dir\n");
 
-    dexloader = set_dexloader(env, MYDEX, tmpdir);
-    if(!dexloader){
+    //configuration =  arthook_entrypoint_start("cippa");
+    if( configuration == NULL){
+        LOGG("ERROR CONFIGURATION INIT!!\n");
+        return 1;
+    }
+    JNIEnv* myenv = get_global_jnienv();
+    arthooklog("diomerda: %s\n", configuration->optdir);
+    dexloader = set_dexloader(myenv, MYDEX, configuration);
+    if(dexloader == NULL){
         LOGG("ERROR dexloader!!\n");
         return 1;
     }
-    if( load_class_from_dex(env, dexloader, MYHOOKCLASS)){
+    jclass hookcls = load_class_from_dex(myenv, dexloader, MYHOOKCLASS);
+    if(  hookcls == NULL){
         LOGG("ERROR loading class: %s !!\n", MYHOOKCLASS);
         return 1;
     }
-    //jclass test = findClassFromClassLoader(env,dexloader,MYHOOKCLASS );
-    //if(jniRegisterNativeMethods(env, test) == 1 ){
-    //    LOGG("JNI REGISTER NATIVE METHODS ERROR!!! \n");
-    //}
-
     int i = 0;
     int nelem = NELEM(methodsToHook);
 
     for(i=0; i < nelem ; i++){
-        mycls = findClassFromClassLoader(env,dexloader, methodsToHook[i].hookclsname);
+        mycls = findClassFromClassLoader(myenv,dexloader, methodsToHook[i].hookclsname);
         if(!mycls){
             LOGG("ERROR findclassfromclassloader!!\n");
             return 1;
@@ -144,12 +124,12 @@ int my_hookdemo_init(JNIEnv* env)
         arthooklog("%s trovata classe %x\n", __PRETTY_FUNCTION__, mycls);
         //jclass gtest = (*env)->NewGlobalRef(env, test);
         //jmethodID testID = (*env)->GetStaticMethodID(env,test,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
-        jmethodID testID = (*env)->GetMethodID(env,mycls,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
-        if( jni_check_for_exception(env) ){
+        jmethodID testID = (*myenv)->GetMethodID(myenv,mycls,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
+        if( jni_check_for_exception(myenv) ){
             LOGG("ERROR cannot find method %s \n", methodsToHook[i].hookmname);
             return 1;
         }
-        arthook_t* tmp = create_hook(env,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, mycls,testID);
+        arthook_t* tmp = create_hook(myenv,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, mycls,testID);
         if(!tmp){
             LOGG("ERROR create_hook\n");
             return 1;
@@ -157,10 +137,7 @@ int my_hookdemo_init(JNIEnv* env)
         add_hook(tmp);
     }    
     print_hashtable();
-    if( arthook_bridge_init(env, mycls)){
-        LOGG("ERROR arthookbridge: register native methods \n");
-        return 1;
-    }
+    arthook_entrypoint_end(hookcls);
     arthooklog("[ %s ]  init terminated, happy hooking !! \n", __PRETTY_FUNCTION__);
     return 0;
 }
@@ -223,17 +200,38 @@ void my_init(void)
         LOGG("cannot resolve symbols from libart.so!!\n");
         return;
     }
+    configuration =  arthook_entrypoint_start("cippa");
+    if( configuration == NULL){
+        LOGG("ERROR CONFIGURATION INIT!!\n");
+        return;
+    }
 
     // hook native functions
     //hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     //init_hook();
 
-    if(hook(&invokeh, getpid(), "libart.",
-         "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
-         NULL, my_invoke_method) == 0){
-        LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b!!\n");
-        return;
+    //checking running version before hook native
+    //[ro.build.version.release]: [5.1.1]
+    //[ro.build.version.sdk]: [22]
+    arthooklog("running on api version %d \n", configuration->osversion);
+
+    if(configuration->osversion <= 19 ){
+        if(hook(&invokeh, getpid(), "libart.",
+                "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_",
+                NULL, my_invoke_method) == 0){
+            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_!!\n");
+            return;
+        }
     }
+    else{
+        if(hook(&invokeh, getpid(), "libart.",
+                "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
+                NULL, my_invoke_method) == 0){
+            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b!!\n");
+            return;
+        }
+    }
+
 
     arthooklog("%s  ended\n\n", __PRETTY_FUNCTION__);
 }
