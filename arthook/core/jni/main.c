@@ -23,6 +23,22 @@ struct config_t* arthook_entrypoint_start(char *config_fname){
         LOGG("ERROR on manager init!!\n");
         return NULL;
     }
+    if(myconfig->osversion <= 19 ){
+        if(hook(&invokeh, getpid(), "libart.",
+                "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_",
+                NULL, my_invoke_method) == 0){
+            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_!!\n");
+            return;
+        }
+    }
+    else{
+        if(hook(&invokeh, getpid(), "libart.",
+                "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
+                NULL, my_invoke_method) == 0){
+            LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b!!\n");
+            return;
+        }
+    }
     return myconfig;
 }
 
@@ -40,15 +56,6 @@ JNIEnv* get_global_jnienv(){
 
 void set_hookdemo_init(void* func){
     hookdemo_init = func;
-}
-
-int init_hook()
-{
-    arthooklog("dentro %s ... \n", __PRETTY_FUNCTION__);
-    if(hookdemo_init() == 1){
-        return 1;
-    }
-    return 0;
 }
 
 //NOT USED!!!
@@ -83,7 +90,7 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     orig_invoke_method = (void*) invokeh.orig;
 
     if(done==0) {
-        if(init_hook()){
+        if(hookdemo_init()){
             LOGG("ERROR on %s\n", __PRETTY_FUNCTION__);
             goto error;
         }
