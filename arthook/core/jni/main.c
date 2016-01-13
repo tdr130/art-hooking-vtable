@@ -16,9 +16,15 @@ pthread_mutex_t epoll_lock ;
 struct config_t* arthook_entrypoint_start(char *config_fname){
     arthooklog("%s called \n", __PRETTY_FUNCTION__ );
     th_env = get_jnienv();
-    if( th_env == NULL ) return NULL;
+    if( th_env == NULL ){
+        LOGG("ERROR getting JNIEnv* \n");
+        return NULL;
+    }
     myconfig =  (struct config_t*) config_init(config_fname);
-    if(myconfig == NULL) return NULL;
+    if(myconfig == NULL){
+        LOGG("ERROR creating configuration \n");
+        return NULL;
+    }
     if(arthook_manager_init(th_env)){
         LOGG("ERROR on manager init!!\n");
         return NULL;

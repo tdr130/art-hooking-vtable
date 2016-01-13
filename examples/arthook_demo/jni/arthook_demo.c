@@ -140,7 +140,7 @@ int my_hookdemo_init()
 
 
 
-JavaVM* vms = NULL;
+extern JavaVM* vms = NULL;
 
 void __attribute__ ((constructor)) my_init(void);
 
@@ -160,7 +160,7 @@ void my_init(void)
         LOGG("cannot resolve symbols from libart.so!!\n");
         return;
     }
-    configuration =  arthook_entrypoint_start("cippa");
+    configuration =  arthook_entrypoint_start("dummy");
     if( configuration == NULL){
         LOGG("ERROR CONFIGURATION INIT!!\n");
         return;

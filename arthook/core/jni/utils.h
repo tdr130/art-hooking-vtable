@@ -9,7 +9,7 @@
 #include "modifiers.h"
 #include "globals.h"
 #include "uthash.h"
-#include "jni_helpers.h"
+#include "jni_helper.h"
 #include "arthook_bridge.h"
 
 #undef NELEM
