@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include "modifiers.h"
 #include "globals.h"
 #include "uthash.h"
@@ -31,4 +32,5 @@ char* getCharFromJstring(JNIEnv* , jstring );
 char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter);
 jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args);
 char*_runCommand(char *command, char *);
+bool processIsZygote();
 #endif

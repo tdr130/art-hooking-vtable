@@ -13,14 +13,14 @@ struct hook_t invokeh;
 struct hook_t eph ;
 pthread_mutex_t epoll_lock ;
 
-struct config_t* arthook_entrypoint_start(char *config_fname){
+struct config_t* arthook_entrypoint_start(char *config_fname, bool zygote){
     arthooklog("%s called \n", __PRETTY_FUNCTION__ );
     th_env = get_jnienv();
     if( th_env == NULL ){
         LOGG("ERROR getting JNIEnv* \n");
         return NULL;
     }
-    myconfig =  (struct config_t*) config_init(config_fname, runnedFromZygote);
+    myconfig =  (struct config_t*) config_init(config_fname, zygote);
     if(myconfig == NULL){
         LOGG("ERROR creating configuration \n");
         return NULL;

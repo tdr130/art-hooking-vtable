@@ -23,6 +23,20 @@ jint getAPIVersion(){
 
 }
 
+bool processIsZygote(){
+    char *cmd = calloc(1,256);
+    bool res = 0;
+    sprintf(cmd, "%s", command_processIsZygote);
+    arthooklog("%s running command: %s \n", __PRETTY_FUNCTION__, cmd);
+    char * c = _runCommand(cmd,NULL);
+    int mpidZygote = atoi(c);
+    if(getpid() == mpidZygote){
+        res = 1;
+    }
+    free(cmd);
+    return res;
+}
+
 int isLollipop()
 {
     jint res = getAPIVersion();
@@ -235,7 +249,7 @@ jobject createInstanceFromClsName(JNIEnv* env, char* clsname)
 //return 1 if 'searchme' is founded in the output of 'command'
 //0 altrimenti
 char* _runCommand(char *command, char *searchme){
-    char buffer[128];
+    char *buffer  = calloc(1,128);
     FILE* fp = popen(command, "r");
     if(fp == NULL){
         LOGG("ERROR getprop\n");
@@ -243,15 +257,21 @@ char* _runCommand(char *command, char *searchme){
     }
     while( !feof(fp) ){
         if( fgets(buffer, 128, fp) != NULL){
-            arthooklog("%s buffer = %s \n", __PRETTY_FUNCTION__, buffer);
-            if(searchme)
-                if(strstr(buffer, searchme) != NULL) return 1;
+            //arthooklog("%s buffer = %s \n", __PRETTY_FUNCTION__, buffer);
+            if(searchme != NULL) {
+                if (strstr(buffer, searchme) != NULL) return (char *) 1;
+            }else {
+                    arthooklog("%s AAAA ritorno %s\n",__PRETTY_FUNCTION__, buffer);
+                    return buffer;
+                }
         }else{
+            LOGG("%s cannot read from fp!\n", __PRETTY_FUNCTION__);
             pclose(fp);
             return 0;
         }
     }
     pclose(fp);
+    arthooklog("%s AAAA2 ritorno %s\n",__PRETTY_FUNCTION__, buffer);
     return buffer;
 }
 /*

@@ -4,8 +4,10 @@
 #include <pthread.h>
 #include <jni.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "arthook_demo.h"
+#include "../../../arthook/core/jni/config.h"
 
 
 static WrapMethodsToHook methodsToHook[] = {
@@ -98,7 +100,18 @@ int my_hookdemo_init()
         return 1;
     }
     JNIEnv* myenv = get_global_jnienv();
-    arthooklog("diomerda: %s\n", configuration->optdir);
+
+    if(configuration->zygote){
+        char *work_dir = _config_create_env();
+        if (work_dir == 0) {
+            LOGG("ERROR CREATE ENV\n");
+            return 1;
+        }
+        arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
+        configuration->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
+        strncpy(configuration->optdir,work_dir,strlen(work_dir));
+        configuration->optdir[strlen(work_dir)] = 0x0;
+    }
     dexloader = set_dexloader(myenv, MYDEX, configuration);
     if(dexloader == NULL){
         LOGG("ERROR dexloader!!\n");
@@ -148,6 +161,7 @@ void __attribute__ ((constructor)) my_init(void);
 void my_init(void)
 {
 
+    bool zygote = 0;
     if (pthread_mutex_init(&lock,NULL) != 0) return;
     // adbi and arthook log functions
     set_logfunction(my_log);
@@ -161,7 +175,12 @@ void my_init(void)
         LOGG("cannot resolve symbols from libart.so!!\n");
         return;
     }
-    configuration =  arthook_entrypoint_start("dummy");
+    if( processIsZygote() ){
+        zygote = 1;
+        arthooklog("%s zygote!!\n", __PRETTY_FUNCTION__);
+    }
+    //TODO
+    configuration =  arthook_entrypoint_start("/data/local/tmp/test.json", zygote);
     if( configuration == NULL){
         LOGG("ERROR CONFIGURATION INIT!!\n");
         return;

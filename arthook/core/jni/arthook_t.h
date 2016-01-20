@@ -3,11 +3,8 @@
 #include <jni.h>
 #include "uthash.h"
 #define MAXSIZE 512
+#include <stdbool.h>
 
-
-#define bool int
-#define true 1
-#define false 0
 
 typedef struct arthook_t{
     char clsname[MAXSIZE];
