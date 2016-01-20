@@ -133,7 +133,7 @@ static int  program_version(){
 }
 
 static int _check_runtime(){
-    if(_getprop(command_runtime, "libart.so"))
+    if(_runCommand(command_runtime, "libart.so"))
         return 1;
     else return 0;
 }
@@ -163,7 +163,7 @@ static char* _config_create_env(){
     }
     return tmpdir;
 }
-void* config_init(char* fname){
+void* config_init(char* fname, bool zygote){
     char* work_dir;
     arthooklog("%s called with : %s len %d \n", __PRETTY_FUNCTION__, fname, strlen(fname) );
     struct config_t* c = (struct config_t*) calloc(1,sizeof(struct config_t));
@@ -198,16 +198,22 @@ void* config_init(char* fname){
         free(c);
         return NULL;
     }
-    work_dir = _config_create_env();
-    if( work_dir == 0){
-        LOGG("ERROR CREATE ENV\n");
-        free(c);
-        return NULL;
+    if( !zygote ) {
+        c->zygote = 0;
+        work_dir = _config_create_env();
+        if (work_dir == 0) {
+            LOGG("ERROR CREATE ENV\n");
+            free(c);
+            return NULL;
+        }
+        arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
+        c->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
+        strncpy(c->optdir,work_dir,strlen(work_dir));
+        c->optdir[strlen(work_dir)] = 0x0;
+    }else{
+        c->zygote = 1;
     }
-    arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
-    c->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
-    strncpy(c->optdir,work_dir,strlen(work_dir));
-    c->optdir[strlen(work_dir)] = 0x0;
+
     return c;
 }
 

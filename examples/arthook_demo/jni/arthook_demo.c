@@ -11,13 +11,14 @@
 static WrapMethodsToHook methodsToHook[] = {
         {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
                 MYHOOKCLASS, "getDeviceId", "()Ljava/lang/String;", NULL},
-/*
+
     //<java.io.FileOutputStream: void write(byte[],int,int)> (FILE)
     {"java/io/FileOutputStream", "write", "([BII)V",
-            MYHOOKCLASS, "write", "(Ljava/lang/Object;[BII)V", NULL},
+            MYHOOKCLASS, "write", "([BII)V", NULL},
 
     {"java/lang/String", "toString","()Ljava/lang/String;",
-            MYHOOKCLASS, "toString", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
+            MYHOOKCLASS, "toString", "()Ljava/lang/String;", NULL},
+        /*
     {"java/security/MessageDigest", "update", "([BII)V",
             MYHOOKCLASS, "update", "(Ljava/lang/Object;[BII)V", NULL},
     {"android/webkit/WebView", "addJavascriptInterface", "(Ljava/lang/Object;Ljava/lang/String;)V",
@@ -153,7 +154,7 @@ void my_init(void)
     set_arthooklogfunction(artlogmsgtofile);
 
     set_hookdemo_init(my_hookdemo_init);
-    arthooklog("ARTDroid %s started\n", __FILE__);
+    arthooklog("ARTDroid %s started pid = %d \n", __FILE__, getpid());
 
     // resolve libart.so symbols used by artstuff.c
     if(resolve_symbols(&d) ){
@@ -170,6 +171,6 @@ void my_init(void)
     //hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     //init_hook();
     arthooklog("running on api version %d \n", configuration->osversion);
-    arthooklog("%s  ended\n\n", __PRETTY_FUNCTION__);
+    arthooklog("%s  ended pid %d \n\n", __PRETTY_FUNCTION__, getpid());
 }
 

@@ -15,11 +15,12 @@ typedef struct config_t{
     char* fname;
     char* optdir;
     int osversion;
+    int zygote;
     int (*parser)(struct config_t*);
 } config_t;
 
  void printJson (json_value *node, int indent, char* name);
 static void process_value(json_value* value, int depth);
-void* config_init(char* fname);
+void* config_init(char* fname, bool);
 
 #endif

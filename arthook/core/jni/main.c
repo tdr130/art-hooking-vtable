@@ -20,7 +20,7 @@ struct config_t* arthook_entrypoint_start(char *config_fname){
         LOGG("ERROR getting JNIEnv* \n");
         return NULL;
     }
-    myconfig =  (struct config_t*) config_init(config_fname);
+    myconfig =  (struct config_t*) config_init(config_fname, runnedFromZygote);
     if(myconfig == NULL){
         LOGG("ERROR creating configuration \n");
         return NULL;

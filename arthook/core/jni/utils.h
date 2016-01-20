@@ -30,5 +30,5 @@ jobject createInstanceFromJClsName(JNIEnv* , jstring );
 char* getCharFromJstring(JNIEnv* , jstring );
 char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter);
 jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args);
-char* _getprop(char* command, char*);
+char*_runCommand(char *command, char *);
 #endif
