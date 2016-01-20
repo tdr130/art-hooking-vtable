@@ -22,8 +22,8 @@ typedef struct methods_to_hook_t{
     char* mname;
     char* msig;
     char* hookclsname;
-    UT_hash_handle hh;
     char *key;
+    UT_hash_handle hh;
 } methods_to_hook_t;
 
 typedef methods_to_hook_t* meth_hooks_p;
@@ -35,11 +35,12 @@ arthook_t* get_hook_by_key(char* key);
 int is_method_in_hashtable();
 void* get_method_from_hashtable(unsigned int* target);
 void print_hashtable();
+void printTargetList();
 static int add_cache(jni_cache_t*);
 void create_cache(char* name, void *ref);
 void* check_cache(char* name);
 int createInfoTarget(meth_hooks_p, json_value*, int);
 int addTargetToList(meth_hooks_p);
-int targetListIterator(meth_hooks_p target, void* func);
+int targetListIterator(void* func);
 #endif
 

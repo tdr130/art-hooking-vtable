@@ -35,6 +35,7 @@ static int parsing_hook_objects(json_value* value, int depth){
         createInfoTarget(target, tmp, l);
         addTargetToList(target);
     }
+    targetListIterator(NULL);
     return 0;
 }
 static void start_parsing(json_value* value, config_t* c){

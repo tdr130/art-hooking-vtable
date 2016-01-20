@@ -16,10 +16,10 @@ pthread_rwlock_t cachelock;
 pthread_rwlock_t targets_dict_lock;
 
 
-int targetListIterator(meth_hooks_p target, void* func){
+int targetListIterator(void* func){
     meth_hooks_p tmp = NULL;
     for(tmp = tt; tmp != NULL; tmp = tmp->hh.next){
-        //arthooklog("cache item: %s = %s \n", tmp->key, name);
+        arthooklog("%s cache item: %s = %s \n", __PRETTY_FUNCTION__, tmp->cname, tmp->key);
     }
     return 0;
 }
@@ -56,7 +56,7 @@ int createInfoTarget(meth_hooks_p target, json_value* jobj, int len){
     strcat(target->key, target->mname);
     strcat(target->key, target->msig);
 
-    arthooklog("target->key = %s \n", target->key);
+    arthooklog("%s target->key = %s \n",__PRETTY_FUNCTION__, target->key);
 
     // tmp->u.object.values[i].name,tmp->u.object.values[i].value->u.string.ptr
     return 0;
