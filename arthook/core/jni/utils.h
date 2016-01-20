@@ -11,6 +11,7 @@
 #include "uthash.h"
 #include "jni_helper.h"
 #include "arthook_bridge.h"
+#include "main.h"
 
 #undef NELEM
 #define NELEM(x)            (sizeof(x)/sizeof(*(x)))
@@ -30,5 +31,5 @@ jobject createInstanceFromJClsName(JNIEnv* , jstring );
 char* getCharFromJstring(JNIEnv* , jstring );
 char* parseSignature(JNIEnv* env, char* sig, jvalue* args, jobjectArray joa, int counter);
 jobject parseReturnType(JNIEnv* env, char *sig, jobject thiz, jclass c, jmethodID mid, jvalue* args);
-char* _getprop(char* command, char*);
+int _getprop(char* command, char*);
 #endif

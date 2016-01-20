@@ -46,7 +46,7 @@ static int set_hook(JNIEnv *env, arthook_t *h)
 arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char* msig, jclass hook_cls, jmethodID hookm)
 {
     arthooklog("------------------------------------------------------------------------------\n\n");
-    arthooklog("%s mname: %s , msig: %s \n ", __PRETTY_FUNCTION__, mname, msig);
+    arthooklog("%s clsname: %s , mname: %s , msig: %s \n ", __PRETTY_FUNCTION__, clsname, mname, msig);
   
     arthook_t *tmp = NULL;
     jclass target = NULL;
@@ -69,12 +69,12 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
 
     // find the target class using JNI
     target = (*env)->FindClass(env, clsname);
-    arthooklog("%s, target class addr: 0x%X \n", __PRETTY_FUNCTION__, target);
+    arthooklog("%s, target class addr: 0x%X \n", __PRETTY_FUNCTION__, (unsigned int) target);
     // make it a global ref for future access
     gTarget = (jclass) (*env)->NewGlobalRef(env, target);
     // get mid of the target method to hook
     target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
-    arthooklog("%s, target mid addr: 0x%X \n" , __PRETTY_FUNCTION__, target_meth_ID);
+    arthooklog("%s, target mid addr: 0x%X \n" , __PRETTY_FUNCTION__, (unsigned int) target_meth_ID);
     tmp->isSingleton = false;
         
 
@@ -105,7 +105,7 @@ static void* get_artmethod_from_reflection(JNIEnv* env, jobject javaMethod){
     int lol = isLollipop(env);
     if(lol){
         arthooklog("ricevuto mid: %p \n", javaMethod);
-        unsigned int* real = ((*(unsigned int*)javaMethod) + 0xc);
+        unsigned int* real = (unsigned int*) ((*(unsigned int*)javaMethod) + 0xc);
         if(!real)
             return NULL;
         arthooklog("chiamato metodo: %p = %x con la reflection \n", real, *real);
@@ -260,7 +260,6 @@ static void* searchInMemory(unsigned int *start, unsigned int target, unsigned i
         //arthooklog("check p = %p and target 0x%08x \n",p, target);
         if(! memcmp(p, g2, 4 )){
             unsigned int* found_at = (unsigned int*) (*start + i) ;
-            arthooklog("%s, target method founded at: 0x%X = 0x%X \n", __PRETTY_FUNCTION__, found_at, *found_at);
             return found_at;
         }
         p += 4; i += 4;
@@ -343,15 +342,15 @@ static unsigned int* searchInMemoryVtable_all(unsigned int start, int target) {
     int midvtable;
 
     //getting declaring_class_
-    pClazz = (start + CLAZZ_OFF_);
-    arthooklog("pclazz vale:  0x%X \n", *pClazz);
-    mid_index = (start + LOLLIPOP_MID_INDEX_OFF );
-    arthooklog("mid_index vale: 0x%02x \n", *mid_index);
-    arthooklog("ora calcolo %08x  + %d * 4 \n", *pClazz, *mid_index);
-    midvtable = ((int)(*pClazz) + (*mid_index * 4));
-    arthooklog("midvtable vale: 0x%X \n", midvtable);
-    mid_handler = midvtable + 0x170;
-    arthooklog("handler2: %X = %08X \n", mid_handler, *mid_handler);
+    pClazz = (unsigned int*) (start + CLAZZ_OFF_);
+    arthooklog("pclazz vale:  0x%X \n", (unsigned int) *pClazz);
+    mid_index = (int*) (start + LOLLIPOP_MID_INDEX_OFF );
+    arthooklog("mid_index vale: 0x%02x \n", (unsigned int) *mid_index);
+    arthooklog("ora calcolo %08x  + %d * 4 \n", *pClazz, (unsigned int) *mid_index);
+    midvtable = (int) ((int)(*pClazz) + (*mid_index * 4));
+    arthooklog("midvtable vale: 0x%X \n",(unsigned int) midvtable);
+    mid_handler = (unsigned int*) midvtable + 0x170;
+    arthooklog("handler2: %X = %08X \n", (unsigned int) mid_handler,(unsigned int)  *mid_handler);
 
     //arthooklog("%s clazz: %p, * = 0x%08x , midindex = %08x [] handler=%p, * = 0x%08x \n", __PRETTY_FUNCTION__,
     //           pClazz , *pClazz, *mid_index,

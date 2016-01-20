@@ -12,74 +12,56 @@
 #include "config.h"
 #include "arthook_manager.h"
 
-static void print_depth_shift(int depth)
-{
-    int j;
-    for (j=0; j < depth; j++) {
-        arthooklog(" ");
-    }
-}
 
+static int parsing_hook_objects(json_value* value, int depth){
+    int length,x,i,l;
+    json_value* root = NULL;
+    json_value* tmp = NULL;
+    meth_hooks_p target;
 
-static void process_object(json_value* value, int depth)
-{
-    int length, x;
-    if (value == NULL) {
-        return;
-    }
-    length = value->u.object.length;
-    for (x = 0; x < length; x++) {
-        print_depth_shift(depth);
-        arthooklog("object[%d].name = %s\n", x, value->u.object.values[x].name);
-        process_value(value->u.object.values[x].value, depth+1);
-    }
-}
-
-static void process_array(json_value* value, int depth)
-{
-    int length, x;
-    if (value == NULL) {
-        return;
-    }
     length = value->u.array.length;
-    arthooklog("array\n");
-    for (x = 0; x < length; x++) {
-        process_value(value->u.array.values[x], depth);
+    arthooklog("hooks objects num %d\n", length);
+    for(x = 0; x < length; x++){
+        target = (meth_hooks_p )malloc(sizeof(methods_to_hook_t));
+        if( target == NULL){
+            LOGG("%s ERROR malloc \n", __PRETTY_FUNCTION__);
+            return 1;
+        }
+        tmp = value->u.array.values[x];
+        l = tmp->u.object.length;
+        for ( i = 0; i < l ;i++){
+            arthooklog("name: %s  = %s \n", tmp->u.object.values[i].name,tmp->u.object.values[i].value->u.string.ptr );
+        }
+        createInfoTarget(target, tmp, l);
+        addTargetToList(target);
     }
+    return 0;
 }
+static void start_parsing(json_value* value, config_t* c){
+    json_value* root = NULL;
 
-static void process_value(json_value* value, int depth)
-{
-    int j;
-    if (value == NULL) {
+    if (value == NULL)
+        return;
+    arthooklog("root vale: %s\n", value->u.object.values[0].name);
+    if( strcmp(value->u.object.values[0].name, "config") != 0){
         return;
     }
-    if (value->type != json_object) {
-        print_depth_shift(depth);
-    }
-    switch (value->type) {
-        case json_none:
-            arthooklog("none\n");
-            break;
-        case json_object:
-            process_object(value, depth+1);
-            break;
-        case json_array:
-            process_array(value, depth+1);
-            break;
-        case json_integer:
-            arthooklog("int: %10" PRId64 "\n", value->u.integer);
-            break;
-        case json_double:
-            arthooklog("double: %f\n", value->u.dbl);
-            break;
-        case json_string:
-            arthooklog("string: %s\n", value->u.string.ptr);
-            break;
-        case json_boolean:
-            arthooklog("bool: %d\n", value->u.boolean);
-            break;
-    }
+    root = value->u.object.values[0].value; //debug object
+    arthooklog("debug vale: %s\n", root->u.object.values[0].name);
+    int debug = root->u.object.values[0].value->u.integer;
+    arthooklog("DEBUG: %d\n", debug);
+    c->debug = debug;
+
+    arthooklog("dexfile vale: %s\n", root->u.object.values[1].name);
+    char* dexfile = root->u.object.values[1].value->u.string.ptr;
+    arthooklog("dex target: %s\n", dexfile);
+    c->dexfile = (char* )malloc(sizeof(char) * strlen(dexfile) + 1);
+    strncpy(c->dexfile, dexfile, strlen(dexfile));
+    c->dexfile[strlen(dexfile)] = 0x0;
+
+    arthooklog("hooks vale: %s\n", root->u.object.values[2].name);
+    root = root->u.object.values[2].value;
+    parsing_hook_objects(root, 2);
 }
 
 int parse_simply(struct config_t* c){
@@ -122,7 +104,8 @@ int parse_simply(struct config_t* c){
         fclose(fp);
         return 1;
     }
-    process_value(node,0);
+    //process_value(node,0);
+    start_parsing(node,c);
     json_value_free(node);
     free(file_contents);
     return 0;
@@ -138,7 +121,7 @@ static int _check_runtime(){
     else return 0;
 }
 static char* _config_create_env(){
-    char tmpdir[256];
+    char* tmpdir = calloc(1,256);
     char ppid[8];
 
     arthooklog("dentro %s, starting %d ....\n", __PRETTY_FUNCTION__, getpid());
@@ -157,10 +140,17 @@ static char* _config_create_env(){
         LOGG("ERROR mkdir: %s \n", strerror(errno));
         return 0;
     }
+    /*
+    if( chmod(tmpdir, 0777) < 0  ){
+        LOGG("ERROR in chmod : %s \n", strerror(errno));
+        return 0;
+    }
+    */
     if( chdir(tmpdir) ){
         LOGG("ERROR chdir!!\n");
         return 0;
     }
+
     return tmpdir;
 }
 void* config_init(char* fname){
@@ -184,7 +174,6 @@ void* config_init(char* fname){
         //free(c);
         //return NULL;
     }
-
     c->version = program_version();
     int api = (int) getAPIVersion();
     if( api == 1){
@@ -198,6 +187,8 @@ void* config_init(char* fname){
         free(c);
         return NULL;
     }
+    /* FIX for zygote injection
+     *
     work_dir = _config_create_env();
     if( work_dir == 0){
         LOGG("ERROR CREATE ENV\n");
@@ -208,8 +199,22 @@ void* config_init(char* fname){
     c->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
     strncpy(c->optdir,work_dir,strlen(work_dir));
     c->optdir[strlen(work_dir)] = 0x0;
+     */
     return c;
 }
+int config_init_working_dir(struct config_t* c){
+    char * work_dir = _config_create_env();
+    if( work_dir == 0){
+        LOGG("ERROR CREATE ENV\n");
+        return 1;
+    }
+    arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
+    c->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
+    strncpy(c->optdir,work_dir,strlen(work_dir));
+    c->optdir[strlen(work_dir)] = 0x0;
+    free(work_dir);
+}
+
 
 void config_free(struct config_t* c){
     free(c);

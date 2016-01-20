@@ -96,7 +96,7 @@ jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetNa
     jclass test = NULL;
     test = (jclass) check_cache(targetName);
     if(test != 0) {
-        arthooklog("%s return from cache: 0x%08x\n", __PRETTY_FUNCTION__, test);
+        arthooklog("%s return from cache: 0x%08x\n", __PRETTY_FUNCTION__,(unsigned int)  test);
         return test;
     }
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");

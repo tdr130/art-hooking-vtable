@@ -24,7 +24,7 @@ void inline test_asm(void* this, unsigned int flags, void* funz){
     );
 }
 void call_test_asm(struct artstuff_t *d){
-    arthooklog("calling dumpallclasses with: %x\n", d->art_dumpallclasses_fnPtr);
+    arthooklog("calling dumpallclasses with: %x\n", (unsigned int) d->art_dumpallclasses_fnPtr);
     test_asm(d->art_runtime_instance,1,d->art_dumpallclasses_fnPtr);
 }
 int resolve_symbols(struct artstuff_t *d){

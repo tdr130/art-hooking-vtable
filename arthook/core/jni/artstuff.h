@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <jni.h>
+#include <stdio.h>
 
 #include "arthook_t.h"
 #include "globals.h"

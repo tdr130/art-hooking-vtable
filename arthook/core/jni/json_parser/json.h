@@ -38,9 +38,9 @@
 #ifndef json_int_t
    #ifndef _MSC_VER
       #include <inttypes.h>
-      #define json_int_t int64_t
+      #define json_int_t int32_t
    #else
-      #define json_int_t __int64
+      #define json_int_t __int32
    #endif
 #endif
 

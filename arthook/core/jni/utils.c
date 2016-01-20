@@ -234,8 +234,9 @@ jobject createInstanceFromClsName(JNIEnv* env, char* clsname)
 }
 //return 1 if 'searchme' is founded in the output of 'command'
 //0 altrimenti
-char* _getprop(char* command, char* searchme){
+int _getprop(char* command, char* searchme){
     char buffer[128];
+    arthooklog("%s executing command: %s \n", __PRETTY_FUNCTION__, command);
     FILE* fp = popen(command, "r");
     if(fp == NULL){
         LOGG("ERROR getprop\n");
@@ -243,6 +244,7 @@ char* _getprop(char* command, char* searchme){
     }
     while( !feof(fp) ){
         if( fgets(buffer, 128, fp) != NULL){
+            //arthooklog("%s buf = %s \n", __PRETTY_FUNCTION__, buffer);
             if(strstr(buffer, searchme) != NULL) return 1;
         }else{
             pclose(fp);

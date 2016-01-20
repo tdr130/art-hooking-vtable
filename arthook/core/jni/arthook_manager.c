@@ -1,15 +1,65 @@
 /*
  * Functions for hooks data structure management
  *
- */
+ */\
 
+
+#include <stdio.h>
 #include "arthook_manager.h"
 
 static struct arthook_t *h = NULL;
 static struct jni_cache_t *jnicache = NULL;
+static meth_hooks_p tt = NULL;
 
 pthread_rwlock_t lock;
 pthread_rwlock_t cachelock;
+pthread_rwlock_t targets_dict_lock;
+
+int targetListIterator(meth_hooks_p target, void* func){
+    meth_hooks_p tmp = NULL;
+    for(tmp = tt; tmp != NULL; tmp = tmp->hh.next){
+        //arthooklog("cache item: %s = %s \n", tmp->key, name);
+    }
+    return 0;
+}
+
+int addTargetToList(meth_hooks_p new){
+    if (pthread_rwlock_wrlock(&targets_dict_lock) != 0) return 1;
+    HASH_ADD_STR(tt, key, new);
+    pthread_rwlock_unlock(&targets_dict_lock);
+    return 0;
+}
+int createInfoTarget(meth_hooks_p target, json_value* jobj, int len){
+
+    char *cname = jobj->u.object.values[0].value->u.string.ptr;
+    size_t cname_len = strlen(cname);
+    char *mname = jobj->u.object.values[1].value->u.string.ptr;
+    size_t mname_len = strlen(mname);
+    char *msig = jobj->u.object.values[2].value->u.string.ptr;
+    size_t msig_len = strlen(msig);
+    char *hookclsname = jobj->u.object.values[3].value->u.string.ptr;
+    size_t hookclsname_len = strlen(hookclsname);
+
+    target->cname = (char*) calloc(1, cname_len+1);
+    target->mname = (char*) calloc(1, mname_len+1);
+    target->msig = (char*) calloc(1, msig_len+1);
+    target->hookclsname = (char*) calloc(1,hookclsname_len+1);
+    target->key = (char*) calloc(1, cname_len + mname_len + msig_len + 1);
+
+    strncpy(target->cname, cname, cname_len);
+    strncpy(target->mname, mname, mname_len);
+    strncpy(target->msig, msig, msig_len);
+    strncpy(target->hookclsname, hookclsname, hookclsname_len);
+
+    strncpy(target->key, cname, cname_len);
+    strcat(target->key, target->mname);
+    strcat(target->key, target->msig);
+
+    arthooklog("target->key = %s \n", target->key);
+
+    // tmp->u.object.values[i].name,tmp->u.object.values[i].value->u.string.ptr
+    return 0;
+}
 
 void create_cache(char* name, jclass ref)
 {
