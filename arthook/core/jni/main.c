@@ -34,7 +34,7 @@ struct config_t* arthook_entrypoint_start(char *config_fname){
                 "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_",
                 NULL, my_invoke_method) == 0){
             LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_!!\n");
-            return NULL;
+            return;
         }
     }
     else{
@@ -42,7 +42,7 @@ struct config_t* arthook_entrypoint_start(char *config_fname){
                 "_ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b",
                 NULL, my_invoke_method) == 0){
             LOGG("cannot find symbol _ZN3art12InvokeMethodERKNS_33ScopedObjectAccessAlreadyRunnableEP8_jobjectS4_S4_b!!\n");
-            return NULL;
+            return;
         }
     }
     return myconfig;

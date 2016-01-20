@@ -9,49 +9,53 @@
 
 
 static WrapMethodsToHook methodsToHook[] = {
-    {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
-            MYHOOKCLASS, "getDeviceId", "()Ljava/lang/String;", NULL},
+        {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
+                MYHOOKCLASS, "getDeviceId", "()Ljava/lang/String;", NULL},
+/*
+    //<java.io.FileOutputStream: void write(byte[],int,int)> (FILE)
+    {"java/io/FileOutputStream", "write", "([BII)V",
+            MYHOOKCLASS, "write", "(Ljava/lang/Object;[BII)V", NULL},
 
     {"java/lang/String", "toString","()Ljava/lang/String;",
-            MYHOOKCLASS, "toString", "()Ljava/lang/String;", NULL},
-
+            MYHOOKCLASS, "toString", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
+    {"java/security/MessageDigest", "update", "([BII)V",
+            MYHOOKCLASS, "update", "(Ljava/lang/Object;[BII)V", NULL},
     {"android/webkit/WebView", "addJavascriptInterface", "(Ljava/lang/Object;Ljava/lang/String;)V",
-            MYHOOKCLASS, "addJavascriptInterface", "(Ljava/lang/Object;Ljava/lang/String;)V", NULL},
-
+            MYHOOKCLASS, "addJavascriptInterface", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/String;)V", NULL},
     {"android/webkit/WebSettings", "setJavaScriptEnabled", "(Z)V",
-            MYHOOKCLASS, "setJavaScriptEnabled", "(Z)V", NULL},
+            MYHOOKCLASS, "setJavaScriptEnabled", "(Ljava/lang/Object;Z)V", NULL},
     {"java/net/URL", "openConnection",
             "()Ljava/net/URLConnection;", MYHOOKCLASS, "openConnection",
-            "()Ljava/net/URLConnection;", NULL},
+            "(Ljava/lang/Object;)Ljava/net/URLConnection;", NULL},
     {"java/lang/String", "compareTo", "(Ljava/lang/String;)I",
-            MYHOOKCLASS, "compareTo", "(Ljava/lang/String;)I", NULL},
+            MYHOOKCLASS, "compareTo", "(Ljava/lang/Object;Ljava/lang/String;)I", NULL},
     {"android/app/ContextImpl","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
-            MYHOOKCLASS, "openFileOutput", "(Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
-    {"android/app/Activity", "startActivity", "(Landroid/content/Intent;)V",
-            MYHOOKCLASS, "startActivity", "(Landroid/content/Intent;)V", NULL },
-    {"javax/net/ssl/HttpsURLConnection", "setHostnameVerifier","(Ljavax/net/ssl/HostnameVerifier;)V",
-            MYHOOKCLASS, "setHostnameVerifier", "(Ljavax/net/ssl/HostnameVerifier;)V", NULL},
-    {"javax/net/ssl/HttpsURLConnection", "setSSLSocketFactory","(Ljavax/net/ssl/SSLSocketFactory;)V",
-                    MYHOOKCLASS, "setSSLSocketFactory", "(Ljavax/net/ssl/SSLSocketFactory;)V", NULL},
-    {"android/app/SharedPreferencesImpl", "getString","(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-            MYHOOKCLASS, "getString", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", NULL},
-    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;Landroid/os/Bundle;)V",
-            MYHOOKCLASS, "startActivity", "(Landroid/content/Intent;Landroid/os/Bundle;)V", NULL },
-    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;)V",
-            MYHOOKCLASS, "startActivity", "(Landroid/content/Intent;)V", NULL },
-   //<java.io.FileOutputStream: void write(byte[],int,int)> (FILE)
-    {"java/io/FileOutputStream", "write", "([BII)V",
-            MYHOOKCLASS, "write", "([BII)V", NULL},
+            MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
 
-    {"java/lang/Class", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
-            MYHOOKCLASS, "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
-            NULL},
-    {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
-        MYHOOKCLASS, "openFileOutput", "(Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
-/*
+    {"android/app/Activity", "startActivity", "(Landroid/content/Intent;)V",
+            MYHOOKCLASS, "startActivity", "(Ljava/lang/Object;Landroid/content/Intent;)V", NULL },
+
+    {"javax/net/ssl/HttpsURLConnection", "setHostnameVerifier","(Ljavax/net/ssl/HostnameVerifier;)V",
+            MYHOOKCLASS, "setHostnameVerifier", "(Ljava/lang/Object;Ljavax/net/ssl/HostnameVerifier;)V", NULL},
+    {"javax/net/ssl/HttpsURLConnection", "setSSLSocketFactory","(Ljavax/net/ssl/SSLSocketFactory;)V",
+                    MYHOOKCLASS, "setSSLSocketFactory", "(Ljava/lang/Object;Ljavax/net/ssl/SSLSocketFactory;)V", NULL},
+    {"android/app/SharedPreferencesImpl", "getString","(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+            MYHOOKCLASS, "getString", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", NULL},
+
+    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;Landroid/os/Bundle;)V",
+            MYHOOKCLASS, "startActivity", "(Ljava/lang/Object;Landroid/content/Intent;Landroid/os/Bundle;)V", NULL },
+    {"android/content/ContextWrapper", "startActivity", "(Landroid/content/Intent;)V",
+            MYHOOKCLASS, "startActivity", "(Ljava/lang/Object;Landroid/content/Intent;)V", NULL },
 
     {"org/apache/http/conn/ssl/SSLConnectionSocketFactory", "<init>", "(Ljavax/net/ssl/SSLContext;)V",
-      MYHOOKCLASS, "SSLConnectionSocketFactory", "(Ljavax/net/ssl/SSLContext;)V", NULL},
+      MYHOOKCLASS, "SSLConnectionSocketFactory", "(Ljava/lang/Object;Ljavax/net/ssl/SSLContext;)V", NULL},
+
+    {"Ljava/lang/Class;", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
+            MYHOOKCLASS, "getMethod", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
+            NULL},
+
+    {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
+        MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
 
     {"android/content/ContextWrapper", "sendBroadcast", "(Landroid/content/Intent;)V",
             MYHOOKCLASS, "sendBroadcast", "(Ljava/lang/Object;Landroid/content/Intent;)V", NULL },
@@ -92,10 +96,6 @@ int my_hookdemo_init()
         LOGG("ERROR CONFIGURATION INIT!!\n");
         return 1;
     }
-    if ( config_init_working_dir(configuration) == NULL) {
-        LOGG("ERROR creating working dir!!!\n");
-        return 1;
-    }
     JNIEnv* myenv = get_global_jnienv();
     arthooklog("diomerda: %s\n", configuration->optdir);
     dexloader = set_dexloader(myenv, MYDEX, configuration);
@@ -112,10 +112,9 @@ int my_hookdemo_init()
     int nelem = NELEM(methodsToHook);
 
     for(i=0; i < nelem ; i++){
-        arthooklog("searching : %s \n ", methodsToHook[i].hookclsname);
         mycls = findClassFromClassLoader(myenv,dexloader, methodsToHook[i].hookclsname);
         if(!mycls){
-            LOGG("ERROR findclassfromclassloader : %s !!\n", methodsToHook[i].hookclsname);
+            LOGG("ERROR findclassfromclassloader!!\n");
             return 1;
         }
         arthooklog("%s trovata classe %x\n", __PRETTY_FUNCTION__, mycls);
@@ -135,7 +134,7 @@ int my_hookdemo_init()
     }    
     print_hashtable();
     arthook_entrypoint_end(hookcls);
-    arthooklog("[ %s pid = %d]  init terminated, happy hooking !! \n", __PRETTY_FUNCTION__, getpid());
+    arthooklog("[ %s ]  init terminated, happy hooking !! \n", __PRETTY_FUNCTION__);
     return 0;
 }
 
@@ -161,7 +160,7 @@ void my_init(void)
         LOGG("cannot resolve symbols from libart.so!!\n");
         return;
     }
-    configuration =  arthook_entrypoint_start("/data/local/tmp/test.json");
+    configuration =  arthook_entrypoint_start("dummy");
     if( configuration == NULL){
         LOGG("ERROR CONFIGURATION INIT!!\n");
         return;
@@ -170,7 +169,7 @@ void my_init(void)
     // hook native functions
     //hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     //init_hook();
-    //arthooklog("running on api version %d \n", configuration->osversion);
+    arthooklog("running on api version %d \n", configuration->osversion);
     arthooklog("%s  ended\n\n", __PRETTY_FUNCTION__);
 }
 

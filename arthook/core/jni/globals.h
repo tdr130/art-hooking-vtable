@@ -4,7 +4,7 @@
 #include <jni.h>
 #include "arthook_t.h"
 #include <android/log.h>
-#include <stdio.h>
+
 #define TAG "ARTvtablehook"
 #define DEBUG 1
 
