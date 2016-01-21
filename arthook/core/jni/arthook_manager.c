@@ -10,16 +10,16 @@ static struct arthook_t *h = NULL;
 static struct jni_cache_t *jnicache = NULL;
 static meth_hooks_p tt = NULL;
 
-
 pthread_rwlock_t lock;
 pthread_rwlock_t cachelock;
 pthread_rwlock_t targets_dict_lock;
 
-
-int targetListIterator(void* func){
+int targetMethodsListIterator(func_pointer fp){
     meth_hooks_p tmp = NULL;
     for(tmp = tt; tmp != NULL; tmp = tmp->hh.next){
         arthooklog("%s cache item: %s = %s \n", __PRETTY_FUNCTION__, tmp->cname, tmp->key);
+        if(fp)
+            fp(tmp);
     }
     return 0;
 }

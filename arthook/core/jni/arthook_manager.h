@@ -27,6 +27,7 @@ typedef struct methods_to_hook_t{
 } methods_to_hook_t;
 
 typedef methods_to_hook_t* meth_hooks_p;
+typedef void (*func_pointer)();
 
 int arthook_manager_init(JNIEnv*);
 // arthook_manager
@@ -41,6 +42,6 @@ void create_cache(char* name, void *ref);
 void* check_cache(char* name);
 int createInfoTarget(meth_hooks_p, json_value*, int);
 int addTargetToList(meth_hooks_p);
-int targetListIterator(void* func);
+int targetMethodsListIterator(func_pointer);
 #endif
 

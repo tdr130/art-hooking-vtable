@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "arthook_demo.h"
-#include "../../../arthook/core/jni/config.h"
 
 
 static WrapMethodsToHook methodsToHook[] = {
@@ -94,7 +93,6 @@ int my_hookdemo_init()
     jclass mycls;
     arthooklog("dentro %s, starting %d ....\n", __PRETTY_FUNCTION__, getpid());
 
-    //configuration =  arthook_entrypoint_start("cippa");
     if( configuration == NULL){
         LOGG("ERROR CONFIGURATION INIT!!\n");
         return 1;

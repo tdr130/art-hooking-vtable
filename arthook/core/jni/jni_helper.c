@@ -24,8 +24,6 @@ extern JNIEnv* get_jnienv(){
     arthooklog("jnienv = 0x%08x \n", (unsigned int) env);
     return env;
 }
-
-
 jobject createDexClassLoader(JNIEnv* env, jobject classLoader, char* mydexpath, char* myoptdir)
 {
     jthrowable exc;

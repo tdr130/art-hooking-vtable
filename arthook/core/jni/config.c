@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "arthook_manager.h"
+static struct config_t* configuration = NULL;
 
 
 static int parsing_hook_objects(json_value* value, int depth){
@@ -35,7 +36,7 @@ static int parsing_hook_objects(json_value* value, int depth){
         createInfoTarget(target, tmp, l);
         addTargetToList(target);
     }
-    targetListIterator(NULL);
+    targetMethodsListIterator(NULL);
     return 0;
 }
 static void start_parsing(json_value* value, config_t* c){
@@ -153,55 +154,55 @@ char* _config_create_env(){
 void* config_init(char* fname, bool zygote){
     char* work_dir;
     arthooklog("%s called with : %s len %d \n", __PRETTY_FUNCTION__, fname, strlen(fname) );
-    struct config_t* c = (struct config_t*) calloc(1,sizeof(struct config_t));
-    if( c == NULL){
+    configuration = (struct config_t*) calloc(1,sizeof(struct config_t));
+    if( configuration == NULL){
         LOGG("ERROR malloc!!\n");
         return NULL;
     }
-    c->fname = (char*) calloc(strlen(fname) + 1, sizeof(char));
-    if( c->fname == NULL){
+    configuration->fname = (char*) calloc(strlen(fname) + 1, sizeof(char));
+    if( configuration->fname == NULL){
         LOGG("ERROR malloc!!\n");
-        free(c);
+        free(configuration);
         return NULL;
     }
-    strcpy(c->fname,fname);
-    c->parser = parse_simply;
-    if( c->parser(c) != 0){
+    strcpy(configuration->fname,fname);
+    configuration->parser = parse_simply;
+    if( configuration->parser(configuration) != 0){
         LOGG("ERROR in json parser!!\n");
         //free(c);
         //return NULL;
     }
 
-    c->version = program_version();
+    configuration->version = program_version();
     int api = (int) getAPIVersion();
     if( api == 1){
         LOGG("ERROR GETTING API VERSION\n");
-        free(c);
+        free(configuration);
         return NULL;
     }
-    c->osversion = api;
+    configuration->osversion = api;
     if( _check_runtime() == 0 ){
         LOGG("ERROR you must set the ART as default runtime!! \n");
-        free(c);
+        free(configuration);
         return NULL;
     }
     if( !zygote ) {
-        c->zygote = 0;
+        configuration->zygote = 0;
         work_dir = _config_create_env();
         if (work_dir == 0) {
             LOGG("ERROR CREATE ENV\n");
-            free(c);
+            free(configuration);
             return NULL;
         }
         arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
-        c->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
-        strncpy(c->optdir,work_dir,strlen(work_dir));
-        c->optdir[strlen(work_dir)] = 0x0;
+        configuration->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
+        strncpy(configuration->optdir,work_dir,strlen(work_dir));
+        configuration->optdir[strlen(work_dir)] = 0x0;
     }else{
-        c->zygote = 1;
+        configuration->zygote = 1;
     }
 
-    return c;
+    return configuration;
 }
 
 void config_free(struct config_t* c){
