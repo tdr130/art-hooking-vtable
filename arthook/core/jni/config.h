@@ -23,9 +23,12 @@ typedef struct config_t{
     int (*parser)(struct config_t*);
 } config_t;
 
+typedef config_t* configT_ptr;
 
 int config_init_working_dir(struct config_t* c);
 void printJson (json_value *node, int indent, char* name);
 static void process_value(json_value* value, int depth);
 void* config_init(char* fname, bool);
+configT_ptr getConfig();
+char* _config_create_env();
 #endif

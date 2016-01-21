@@ -28,12 +28,6 @@ extern void (*log_function)(char *logmsg);
         fprintf(fp, __VA_ARGS__);\
         fclose(fp);}}
 */
-
-
-
-
-// shared between process/threads
-extern JavaVM* vms;
 extern JNIEnv* get_jnienv();
 
 

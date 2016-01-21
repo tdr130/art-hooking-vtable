@@ -19,8 +19,9 @@ jclass load_class_from_dex(JNIEnv* env, jobject dexloader, char* clsname)
     jclass c = loadClassFromClassLoader(env, dexloader,clsname );
     return c;
 }
-jobject set_dexloader(JNIEnv* env, char* dexfile, struct config_t* c)
+jobject set_dexloader(JNIEnv* env, char* dexfile)
 {
+    configT_ptr c = getConfig();
     arthooklog("%s CALLED with optdir = %s \n", __PRETTY_FUNCTION__, c->optdir);
     jobject systemCL = getSystemClassLoader(env);
     jobject dexloader  = createDexClassLoader(env, systemCL, dexfile, c->optdir);

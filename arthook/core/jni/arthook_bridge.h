@@ -10,8 +10,9 @@
 #define BRIDGE_UTILS "org/sid/arthookbridge/Utils"
 
 jclass load_class_from_dex(JNIEnv* env, jobject, char* clsname);
-jobject set_dexloader(JNIEnv* env, char* dexfile, struct config_t* c);
+jobject set_dexloader(JNIEnv* env, char* dexfile);
 jobject get_dexloader();
+
 jint printStackTraceFromJava(JNIEnv* env);
 jint callGetInt(JNIEnv* env, jobject javaArgs, int index);
 jobject callGetObj(JNIEnv* env, jobject javaArgs, int index);

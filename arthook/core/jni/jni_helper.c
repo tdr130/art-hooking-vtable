@@ -1,5 +1,7 @@
 #include "jni_helper.h"
 
+static JavaVM* vms = NULL;
+
 JNIEnv* getEnv() 
 {
     JNIEnv *env;

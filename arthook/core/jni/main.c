@@ -8,28 +8,33 @@
 
 //TODO check if it is per-thread
 static JNIEnv* th_env = NULL;
-static jobject dexLoader = NULL;
 
 int done = 0;
 struct hook_t invokeh;
 struct hook_t eph ;
 pthread_mutex_t epoll_lock ;
 
-
 /*
  * set hooks from target dict
  */
-static int hookTargetMethods(meth_hooks_p target){
+static int hookTargetMethod(meth_hooks_p target){
+    arthooklog("%s called with target = %s \n", __PRETTY_FUNCTION__, target->key);
     JNIEnv* myenv = get_global_jnienv();
+    jobject dexLoader = get_dexloader();
+    if(!myenv || !dexLoader){
+        LOGG("%s ERROR get_dexloader!!\n", __PRETTY_FUNCTION__);
+        return 1;
+    }
+    arthooklog("%s cerco class: %s \n", __PRETTY_FUNCTION__, target->hookclsname);
     jclass mycls = findClassFromClassLoader(myenv,dexLoader, target->hookclsname);
     if(!mycls){
         LOGG("ERROR findclassfromclassloader!!\n");
         return 1;
     }
     arthooklog("%s trovata classe %x\n", __PRETTY_FUNCTION__, mycls);
-    jmethodID testID = (*myenv)->GetMethodID(myenv,mycls,target->hookclsname, target->msig);
+    jmethodID testID = (*myenv)->GetMethodID(myenv,mycls,target->mname, target->msig);
     if( jni_check_for_exception(myenv) ){
-        LOGG("ERROR cannot find method %s \n", target->hookclsname);
+        LOGG("ERROR cannot find method %s \n", target->mname);
         return 1;
     }
     arthook_t* tmp = create_hook(myenv,target->cname, target->mname, target->msig, mycls,testID);
@@ -84,18 +89,43 @@ struct config_t* arthook_entrypoint_start(char *config_fname, bool zygote){
     return myconfig;
 }
 /* register native methods exposed to Java */
-void* arthook_entrypoint_end(void* mycls){
-    if( arthook_bridge_init( get_global_jnienv(), (jclass) mycls)){
-        LOGG("ERROR arthookbridge: register native methods \n");
-        return NULL;
+
+/*
+ */
+int arthook_init(){
+    arthooklog("%s called \n", __PRETTY_FUNCTION__);
+    JNIEnv* myenv = get_global_jnienv();
+    configT_ptr  configuration = getConfig();
+    if(configuration->zygote){
+        char *work_dir = _config_create_env();
+        if (work_dir == 0) {
+            LOGG("ERROR CREATE ENV\n");
+            return 1;
+        }
+        arthooklog("working dir: %s , len = %d \n ", work_dir, strlen(work_dir));
+        configuration->optdir = (char*) calloc(strlen(work_dir) + 1, sizeof(char));
+        strncpy(configuration->optdir,work_dir,strlen(work_dir));
+        configuration->optdir[strlen(work_dir)] = 0x0;
     }
+    jobject dexloader = set_dexloader(myenv, MYDEX);
+    if(dexloader == NULL){
+        LOGG("ERROR dexloader!!\n");
+        return 1;
+    }
+    jclass hookcls = load_class_from_dex(myenv, dexloader, MYHOOKCLASS);
+    if(  hookcls == NULL){
+        LOGG("%s ERROR loading class: %s !!\n", __PRETTY_FUNCTION__,MYHOOKCLASS);
+        return 1;
+    }
+
+    targetMethodsListIterator(hookTargetMethod);
+
+    print_hashtable();
+    arthook_entrypoint_end(hookcls);
+    arthooklog("[ %s ]  init terminated, happy hooking !! \n", __PRETTY_FUNCTION__);
+    return 0;
 }
-JNIEnv* get_global_jnienv(){
-    return th_env;
-}
-void set_hookdemo_init(void* func){
-    hookdemo_init = func;
-}
+
 void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs) {
     arthooklog("!!! %s receiver : 0x%08x, javamethod : 0x%08x \n", __PRETTY_FUNCTION__,
                (unsigned int) javaReceiver, (unsigned int) javaMethod);
@@ -104,9 +134,7 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     void *res = NULL;
     orig_invoke_method = (void *) invokeh.orig;
     if (done == 0) {
-        //loadDex();
-        //targetMethodsListIterator(NULL);
-        if (hookdemo_init()) {
+        if (arthook_init()) {
             LOGG("ERROR on %s\n", __PRETTY_FUNCTION__);
             return 0;
         }
@@ -120,6 +148,19 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
 
     return res;
 }
+void* arthook_entrypoint_end(jclass mycls){
+    if( arthook_bridge_init( get_global_jnienv(), (jclass) mycls)){
+        LOGG("ERROR arthookbridge: register native methods \n");
+        return NULL;
+    }
+}
+JNIEnv* get_global_jnienv(){
+    return th_env;
+}
+void set_hookdemo_init(void* func){
+    hookdemo_init = func;
+}
+
     /*
     jint checkstack = 0;
     void *checkcalledmethod = (void *) 0;

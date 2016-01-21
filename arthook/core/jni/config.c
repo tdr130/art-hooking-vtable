@@ -14,6 +14,9 @@
 static struct config_t* configuration = NULL;
 
 
+configT_ptr getConfig(){
+    return configuration;
+}
 static int parsing_hook_objects(json_value* value, int depth){
     int length,x,i,l;
     json_value* root = NULL;
